@@ -1,0 +1,29 @@
+{
+  "versao": 1,
+  "_nota": "Valores em centavos. Situação real de outubro de 2026.",
+  "config": {
+    "id": "principal",
+    "renda": 160600,
+    "diaUtilSalario": 10,
+    "reservaMinima": 5000,
+    "criadoEm": "2026-10-11"
+  },
+  "contas": [
+    { "id": "notebook", "nome": "Notebook Dell", "valor": 39500, "tipo": "parcela", "ultimaParcela": "2027-05", "ordem": 1 },
+    { "id": "claude", "nome": "Claude Pro", "valor": 11600, "tipo": "recorrente", "observacao": "Varia entre R$ 110 e R$ 116 (IOF e câmbio); usado o maior", "ordem": 2 },
+    { "id": "luz", "nome": "Conta de luz", "valor": 15000, "tipo": "recorrente", "observacao": "Varia entre R$ 120 e R$ 150; usado o maior", "ordem": 3 },
+    { "id": "internet", "nome": "Internet", "valor": 8000, "tipo": "recorrente", "ordem": 4 },
+    { "id": "perfume", "nome": "Perfume Natura Essencial Oud", "valor": 3200, "tipo": "parcela", "ultimaParcela": "2026-11", "ordem": 5 },
+    { "id": "shopee", "nome": "Compras Shopee", "valor": 4800, "tipo": "parcela", "ultimaParcela": "2027-06", "ordem": 6 },
+    { "id": "facio", "nome": "Empréstimo Facio", "valor": 5000, "tipo": "parcela", "ultimaParcela": "2026-10", "ordem": 7 },
+    { "id": "picpay-set", "nome": "Fatura PicPay Card (compras de setembro)", "valor": 24700, "tipo": "parcela", "ultimaParcela": "2026-10", "observacao": "Compras feitas antes de usar o app. Das próximas faturas em diante, as compras no crédito já entram como gastos", "ordem": 8 },
+    { "id": "google", "nome": "Google (Gemini Pro + 1 TB)", "valor": 2399, "tipo": "recorrente", "ordem": 9 }
+  ],
+  "categorias": [
+    { "id": "higiene", "nome": "Higiene", "desejo": 10000, "essencial": true, "descricao": "Enxaguante, desodorantes, creme dental, sabonetes", "cor": "c1", "ordem": 1 },
+    { "id": "churrasco", "nome": "Churrasco", "desejo": 18000, "essencial": false, "descricao": "Compras para o churrasco", "cor": "c2", "ordem": 2 },
+    { "id": "lazer", "nome": "Lazer", "desejo": 8000, "essencial": false, "descricao": "Pizza, lanches, besteiras e cinema", "cor": "c3", "ordem": 3 },
+    { "id": "roupas", "nome": "Roupas", "desejo": 5209, "essencial": false, "descricao": "Outubro: camiseta preta + 3 colares. Novembro: kit de 2 camisetas (R$ 79,90)", "cor": "c4", "ordem": 4 }
+  ],
+  "gastos": []
+}
