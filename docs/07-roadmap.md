@@ -8,16 +8,16 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 
 **Objetivo:** projeto rodando, com qualidade configurada desde o primeiro commit.
 
-- [ ] `git init` e commit só da documentação (`docs: adiciona documentação inicial`), **antes** de gerar o projeto
-- [ ] Gerar o projeto Vite (template `react-ts`) nesta mesma pasta. Ela não está vazia: escolha a opção que mantém os arquivos existentes. Se o template sobrescrever o `README.md`, restaure com `git checkout -- README.md`
-- [ ] Ativar TypeScript strict
-- [ ] Instalar e configurar Tailwind CSS v4
-- [ ] Configurar ESLint
-- [ ] Instalar Vitest e criar um teste de exemplo que passa
-- [ ] Criar os scripts `test`, `typecheck` e `lint` no `package.json`
-- [ ] Criar a árvore de pastas de `02-stack-e-arquitetura.md` (pastas vazias com `.gitkeep`)
-- [ ] Completar o README com como rodar e as versões instaladas
-- [ ] Commit `chore: configura projeto vite com react, typescript, tailwind e vitest`
+- [x] `git init` e commit só da documentação (`docs: adiciona documentação inicial`), **antes** de gerar o projeto
+- [x] Gerar o projeto Vite (template `react-ts`) nesta mesma pasta. Ela não está vazia: escolha a opção que mantém os arquivos existentes. Se o template sobrescrever o `README.md`, restaure com `git checkout -- README.md`
+- [x] Ativar TypeScript strict
+- [x] Instalar e configurar Tailwind CSS v4
+- [x] Configurar ESLint
+- [x] Instalar Vitest e criar um teste de exemplo que passa
+- [x] Criar os scripts `test`, `typecheck` e `lint` no `package.json`
+- [x] Criar a árvore de pastas de `02-stack-e-arquitetura.md` (pastas vazias com `.gitkeep`)
+- [x] Completar o README com como rodar e as versões instaladas
+- [x] Commit `chore: configura projeto vite com react, typescript, tailwind e vitest`
 
 **Pausa:** rode `npm run dev` e abra no navegador. Rode `npm test`. Os dois funcionam?
 
