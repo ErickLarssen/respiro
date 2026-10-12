@@ -30,7 +30,7 @@ Depois de salvar, se a categoria passou de 80% ou de 100% do teto, o aviso diz i
 ## Gastos (`/gastos`)
 
 - Total do mês e "No cartão este mês: R$ X (entra na fatura do mês que vem)".
-- Lista agrupada por dia ("sáb, 11/out"), com descrição, categoria, forma e valor.
+- Lista agrupada por dia ("dom, 11/out"), com descrição, categoria, forma e valor.
 - Tocar num gasto permite **editar** ou **apagar**. Apagar pede confirmação na própria tela (sem `confirm()` do navegador).
 
 ## Plano (`/plano`)

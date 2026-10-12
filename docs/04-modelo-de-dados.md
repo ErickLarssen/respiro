@@ -79,8 +79,8 @@ Gastos do mês: `db.gastos.where("data").between("2026-10-01", "2026-10-31", tru
 ## Primeiro uso
 
 Se a tabela `config` estiver vazia ao abrir o app, mostrar uma tela com duas opções:
-1. **"Começar com meus dados"**: carrega `docs/dados-iniciais.json` (copiado para `src/data/dadosIniciais.ts`).
-2. **"Começar do zero"**: abre Ajustes vazio.
+1. **"Começar com meus dados"**: carrega `docs/dados-iniciais.json`. O arquivo `src/data/dadosIniciais.ts` **importa** o JSON em vez de copiar os valores, para existir uma única fonte.
+2. **"Começar do zero"**: salva uma config zerada (renda 0, reserva mínima 0, dia útil do salário 5, sem contas nem categorias) e abre Ajustes para o usuário preencher. Até a Etapa 4, sem a tela de Ajustes, o app mostra o plano zerado.
 
 ## Backup
 

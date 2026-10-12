@@ -420,7 +420,7 @@ Usado no número do anel, no total do mês e na reserva.
 - **Etiqueta de estado:** pílula de 20px de altura, Michroma 9.5px, fundo da cor a 14%, texto na cor.
 - **Campo de texto:** fundo `--bg-2`, borda `--line`, raio `--r-sm`, 48px de altura. No foco: borda `--accent` e anel de 3px em `--accent-glow`. Rótulo acima em Michroma 10px.
 - **Linha de gasto:** ponto da categoria (8px), descrição (Geist 15px) e categoria + forma (13px `--fg-muted`) à esquerda; valor em Geist Mono à direita. Divisória `--line` entre linhas. No toque, o fundo vai a `--bg-2` por 120ms.
-- **Cabeçalho do dia:** "SÁB · 11 OUT" em Michroma 10px `--fg-faint`, fixo no topo durante a rolagem (`position: sticky` com `top: env(safe-area-inset-top)`).
+- **Cabeçalho do dia:** "DOM · 11 OUT" em Michroma 10px `--fg-faint`, fixo no topo durante a rolagem (`position: sticky` com `top: env(safe-area-inset-top)`).
 
 ### 7.11 Gráfico da projeção (tela Plano)
 

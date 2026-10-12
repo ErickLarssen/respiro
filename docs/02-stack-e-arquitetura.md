@@ -62,11 +62,13 @@ respiro/
     │   ├── db.ts                 ← schema Dexie
     │   ├── repositorio.ts        ← salvarConfig, adicionarGasto, apagarGasto...
     │   ├── backup.ts             ← exportar/importar JSON
-    │   └── dadosIniciais.ts      ← carrega docs/dados-iniciais.json no primeiro uso
+    │   ├── dadosIniciais.ts      ← importa docs/dados-iniciais.json (sem copiar) para o primeiro uso
+    │   └── __tests__/            ← testes do repositório com fake-indexeddb
     ├── hooks/
     │   ├── useConfig.ts
     │   ├── useGastosDoMes.ts
-    │   └── usePlanoDoMes.ts
+    │   ├── usePlanoDoMes.ts
+    │   └── useHoje.ts            ← único lugar que lê o relógio; o domínio recebe "hoje" por parâmetro
     ├── components/
     │   ├── BarraDeAbas.tsx
     │   ├── SeletorDeMes.tsx
@@ -74,6 +76,7 @@ respiro/
     │   ├── FolhaNovoGasto.tsx    ← painel que sobe de baixo para anotar gasto
     │   └── Aviso.tsx
     └── pages/
+        ├── PrimeiroUso.tsx       ← "Começar com meus dados" / "Começar do zero"
         ├── Inicio.tsx
         ├── Gastos.tsx
         ├── Plano.tsx

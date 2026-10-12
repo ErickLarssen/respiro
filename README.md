@@ -44,6 +44,9 @@ Registradas na Etapa 0 (outubro de 2026), com Node.js 24.18.0 e npm 11.16.0.
 | eslint-plugin-react-hooks | 7.1.1 |
 | eslint-plugin-react-refresh | 0.5.7 |
 | @vitejs/plugin-react | 6.1.2 |
+| dexie | 4.4.6 |
+| dexie-react-hooks | 4.4.0 |
+| fake-indexeddb (só testes) | 6.2.5 |
 
 ## Documentação
 

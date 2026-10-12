@@ -1,11 +1,15 @@
-// Página provisória da Etapa 0: só confirma que React e Tailwind estão funcionando.
+import { useConfig } from './hooks/useConfig'
+import PlanoProvisorio from './pages/PlanoProvisorio'
+import PrimeiroUso from './pages/PrimeiroUso'
+
+// Etapa 2: sem config salva, mostra o primeiro uso; com config, o plano provisório.
+// As abas e rotas chegam na Etapa 3.
 export default function App() {
+  const { carregando, config } = useConfig()
+
   return (
-    <main className="grid min-h-dvh place-items-center bg-slate-950 p-4 text-slate-100">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-wide text-cyan-300">Respiro</h1>
-        <p className="mt-2 text-slate-400">Projeto configurado. As telas chegam nas próximas etapas.</p>
-      </div>
-    </main>
+    <div className="min-h-dvh bg-slate-950 text-slate-100">
+      {carregando ? null : config ? <PlanoProvisorio config={config} /> : <PrimeiroUso />}
+    </div>
   )
 }

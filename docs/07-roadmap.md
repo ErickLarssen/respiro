@@ -43,12 +43,12 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 
 ## Etapa 2 — Dados no aparelho
 
-- [ ] `db.ts` com o schema Dexie
-- [ ] `repositorio.ts`: salvar config, CRUD de contas, categorias e gastos
-- [ ] `dadosIniciais.ts` a partir de `docs/dados-iniciais.json`
-- [ ] Hooks `useConfig`, `useGastosDoMes`, `usePlanoDoMes`
-- [ ] Tela de primeiro uso ("Começar com meus dados" / "Começar do zero")
-- [ ] Página provisória que mostra o plano de outubro em texto puro (para conferir: reserva R$ 51,92)
+- [x] `db.ts` com o schema Dexie
+- [x] `repositorio.ts`: salvar config, CRUD de contas, categorias e gastos
+- [x] `dadosIniciais.ts` a partir de `docs/dados-iniciais.json`
+- [x] Hooks `useConfig`, `useGastosDoMes`, `usePlanoDoMes`
+- [x] Tela de primeiro uso ("Começar com meus dados" / "Começar do zero")
+- [x] Página provisória que mostra o plano de outubro em texto puro (para conferir: reserva R$ 51,92)
 
 **Pausa:** abra o app, escolha "Começar com meus dados" e confira a reserva. Recarregue a página: os dados continuam lá? No navegador, abra DevTools → Application → IndexedDB e veja as tabelas.
 
