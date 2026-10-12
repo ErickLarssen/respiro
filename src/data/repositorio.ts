@@ -79,6 +79,18 @@ export async function apagarGasto(id: string): Promise<void> {
 
 // ---------- Tudo de uma vez ----------
 
+/** Todos os dados do aparelho (para o backup). */
+export async function lerTudo(): Promise<DadosIniciais> {
+  const [config, contas, categorias, gastos] = await Promise.all([
+    obterConfig(),
+    listarContas(),
+    listarCategorias(),
+    db.gastos.orderBy('data').toArray(),
+  ])
+  if (!config) throw new Error('Ainda não há dados para exportar.')
+  return { config, contas, categorias, gastos }
+}
+
 /** Apaga todos os dados do aparelho. */
 export async function apagarTudo(): Promise<void> {
   await db.transaction('rw', db.tables, async () => {

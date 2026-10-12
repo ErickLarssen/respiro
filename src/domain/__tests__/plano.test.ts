@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularPlano, type EntradaPlano } from '../plano'
+import { calcularPlano, fraseEfeitoNaReserva, type EntradaPlano } from '../plano'
 import type { Categoria } from '../tipos'
 import { categorias, config, contas } from './dadosDeTeste'
 
@@ -164,5 +164,20 @@ describe('propriedade: tudo soma a renda', () => {
 
     // Garante que o sorteio realmente testou muitos casos.
     expect(casosComSobra).toBeGreaterThan(300)
+  })
+})
+
+describe('fraseEfeitoNaReserva', () => {
+  it('diz de quanto para quanto a reserva vai', () => {
+    const antes = calcularPlano(entrada('2026-10'))
+    const depois = calcularPlano(entrada('2026-10', 160600 + 1000))
+    expect(fraseEfeitoNaReserva(antes, depois)).toBe(
+      `Com essa mudança, a reserva de outubro vai de ${R$}51,92 para ${R$}61,92.`,
+    )
+  })
+
+  it('avisa quando a reserva não muda', () => {
+    const plano = calcularPlano(entrada('2026-10'))
+    expect(fraseEfeitoNaReserva(plano, plano)).toBe(`Essa mudança não altera a reserva de outubro (${R$}51,92).`)
   })
 })

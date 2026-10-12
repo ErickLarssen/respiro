@@ -1,4 +1,5 @@
 import { totalContasFixas } from './contas'
+import { nomeDoMes } from './datas'
 import { formatarBRL } from './dinheiro'
 import type { Categoria, Centavos, Conta, Mes, Plano, Situacao } from './tipos'
 
@@ -57,6 +58,18 @@ function planoDeDeficit(entrada: EntradaPlano, contasFixas: Centavos, sobra: Cen
     situacao: 'deficit',
     mensagens: [`As contas fixas passam da renda em ${formatarBRL(-sobra)}.`],
   }
+}
+
+/**
+ * Prévia de Ajustes (docs/05-telas-e-fluxos.md): o efeito de uma mudança na reserva do mês.
+ * "Com essa mudança, a reserva de outubro vai de R$ 51,92 para R$ 61,92."
+ */
+export function fraseEfeitoNaReserva(antes: Plano, depois: Plano): string {
+  const mes = nomeDoMes(depois.mes)
+  if (antes.reserva === depois.reserva) {
+    return `Essa mudança não altera a reserva de ${mes} (${formatarBRL(depois.reserva)}).`
+  }
+  return `Com essa mudança, a reserva de ${mes} vai de ${formatarBRL(antes.reserva)} para ${formatarBRL(depois.reserva)}.`
 }
 
 export function calcularPlano(entrada: EntradaPlano): Plano {

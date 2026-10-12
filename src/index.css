@@ -612,6 +612,17 @@ body::after {
   }
 }
 
+/* Barras do gráfico da projeção crescem de baixo, em cascata (seção 7.11) */
+@keyframes crescer {
+  from {
+    transform: scaleY(0);
+  }
+}
+.grafico-barra {
+  transform-origin: bottom;
+  animation: crescer var(--d-4) var(--ease-out) backwards;
+}
+
 /* Cursor piscando do valor no painel de gasto (seção 7.7) */
 @keyframes cursor-piscando {
   50% {
@@ -668,7 +679,8 @@ body::after {
   .anel-brilho,
   .medidor-pulso,
   .etiqueta-piscar,
-  .cursor-piscando {
+  .cursor-piscando,
+  .grafico-barra {
     animation: none;
   }
 }

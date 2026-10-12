@@ -4,6 +4,7 @@ import {
   dataCurta,
   diaDaData,
   diaEMes,
+  mesAbreviado,
   mesCurto,
   mesPorExtenso,
   nomeDoMes,
@@ -102,6 +103,8 @@ describe('textos de data para a interface', () => {
   it('abrevia o mês com 3 letras', () => {
     expect(mesCurto('2026-10')).toBe('out 2026')
     expect(mesCurto('2027-02')).toBe('fev 2027')
+    expect(mesAbreviado('2027-05')).toBe('mai/27')
+    expect(mesAbreviado('2030-12')).toBe('dez/30')
   })
 
   it('escreve datas curtas com o dia da semana', () => {

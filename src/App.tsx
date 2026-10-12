@@ -3,13 +3,16 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import Aviso, { type DadosAviso } from './components/ui/Aviso'
 import BarraDeAbas from './components/ui/BarraDeAbas'
 import FolhaNovoGasto from './components/ui/FolhaNovoGasto'
+import type { Gasto } from './domain/tipos'
 import type { AvisoDoGasto } from './hooks/anotarGasto'
+import type { ContextoDoLayout } from './hooks/useLayout'
 import { useCategorias } from './hooks/useCategorias'
 import { useConfig } from './hooks/useConfig'
 import { useHoje } from './hooks/useHoje'
-import EmBreve from './pages/EmBreve'
+import Ajustes from './pages/Ajustes'
 import Inicio from './pages/Inicio'
-import PlanoProvisorio from './pages/PlanoProvisorio'
+import Gastos from './pages/Gastos'
+import Plano from './pages/Plano'
 import PrimeiroUso from './pages/PrimeiroUso'
 import { useLuzDoCursor } from './ui/useLuzDoCursor'
 
@@ -30,23 +33,38 @@ function Layout() {
   const { pathname } = useLocation()
   const categorias = useCategorias()
   const [folhaAberta, setFolhaAberta] = useState(false)
+  const [gastoParaEditar, setGastoParaEditar] = useState<Gasto | null>(null)
   const [aviso, setAviso] = useState<DadosAviso | null>(null)
+
+  function mostrarAviso(novoAviso: AvisoDoGasto) {
+    setAviso({ ...novoAviso, id: Date.now() })
+  }
 
   function aoSalvar(novoAviso: AvisoDoGasto) {
     setFolhaAberta(false)
-    setAviso({ ...novoAviso, id: Date.now() })
+    mostrarAviso(novoAviso)
+  }
+
+  // O que as telas podem pedir ao layout (ver hooks/useLayout.ts)
+  const contexto: ContextoDoLayout = {
+    abrirFolha: (gasto) => {
+      setGastoParaEditar(gasto ?? null)
+      setFolhaAberta(true)
+    },
+    mostrarAviso,
   }
 
   return (
     <>
-      <Outlet />
-      <BarraDeAbas mostrarMais={pathname === '/' || pathname === '/gastos'} onMais={() => setFolhaAberta(true)} />
+      <Outlet context={contexto} />
+      <BarraDeAbas mostrarMais={pathname === '/' || pathname === '/gastos'} onMais={() => contexto.abrirFolha()} />
       <FolhaNovoGasto
         aberta={folhaAberta}
         onFechar={() => setFolhaAberta(false)}
         onSalvo={aoSalvar}
         categorias={categorias ?? []}
         hoje={hoje}
+        gastoParaEditar={gastoParaEditar}
       />
       <Aviso aviso={aviso} onFechar={() => setAviso(null)} />
     </>
@@ -71,9 +89,9 @@ export default function App() {
       <Route element={<ExigeConfig />}>
         <Route element={<Layout />}>
           <Route index element={<Inicio />} />
-          <Route path="gastos" element={<EmBreve titulo="Gastos" />} />
-          <Route path="plano" element={<PlanoProvisorio />} />
-          <Route path="ajustes" element={<EmBreve titulo="Ajustes" />} />
+          <Route path="gastos" element={<Gastos />} />
+          <Route path="plano" element={<Plano />} />
+          <Route path="ajustes" element={<Ajustes />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

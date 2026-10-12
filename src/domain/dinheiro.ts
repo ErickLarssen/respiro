@@ -7,6 +7,13 @@ export function formatarBRL(valor: Centavos): string {
   return formatador.format(valor / 100)
 }
 
+/** O inverso de lerValorDigitado, para preencher um campo: 3550 → "35,50"; 3500 → "35". */
+export function valorParaDigitar(valor: Centavos): string {
+  const reais = Math.floor(valor / 100)
+  const centavos = valor % 100
+  return centavos === 0 ? String(reais) : `${reais},${String(centavos).padStart(2, '0')}`
+}
+
 // Reais, e opcionalmente vírgula ou ponto seguido de 1 ou 2 dígitos de centavos.
 // Ponto também vale como decimal porque alguns teclados numéricos de celular não têm vírgula.
 const VALOR_DIGITADO = /^(\d+)(?:[.,](\d{1,2}))?$/

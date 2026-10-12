@@ -1,25 +1,26 @@
 import { AnimatePresence, motion, useDragControls, useReducedMotion, type PanInfo } from 'motion/react'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { lerUltimaForma, salvarUltimaForma } from '../../data/preferencias'
-import { lerValorDigitado } from '../../domain/dinheiro'
+import { lerValorDigitado, valorParaDigitar } from '../../domain/dinheiro'
 import { FORA_DO_PLANO } from '../../domain/resumo'
-import type { Categoria, DataISO, FormaPagamento } from '../../domain/tipos'
-import { anotarGasto, type AvisoDoGasto } from '../../hooks/anotarGasto'
+import type { Categoria, DataISO, FormaPagamento, Gasto } from '../../domain/tipos'
+import { anotarGasto, editarGasto, type AvisoDoGasto } from '../../hooks/anotarGasto'
 import { fadeRapido, molaFirme, molaSuave } from '../../ui/movimento'
 import Botao from './Botao'
 import Campo from './Campo'
+import Segmentado, { type OpcaoSegmentada } from './Segmentado'
 
 // Painel "Anotar gasto" (docs/05-telas-e-fluxos.md e docs/08-design.md, seção 7.7).
-// Sobe de baixo; arrastar para baixo fecha.
+// Sobe de baixo; arrastar para baixo fecha. Também edita um gasto (tela Gastos).
 
 const ARRASTE_PARA_FECHAR = 120 // px
 const VELOCIDADE_PARA_FECHAR = 600
 
-const FORMAS: { id: FormaPagamento; rotulo: string }[] = [
-  { id: 'pix', rotulo: 'Pix' },
-  { id: 'debito', rotulo: 'Débito' },
-  { id: 'dinheiro', rotulo: 'Dinheiro' },
-  { id: 'credito', rotulo: 'Crédito' },
+const FORMAS: OpcaoSegmentada<FormaPagamento>[] = [
+  { valor: 'pix', rotulo: 'Pix' },
+  { valor: 'debito', rotulo: 'Débito' },
+  { valor: 'dinheiro', rotulo: 'Dinheiro' },
+  { valor: 'credito', rotulo: 'Crédito' },
 ]
 
 interface FolhaNovoGastoProps {
@@ -29,9 +30,18 @@ interface FolhaNovoGastoProps {
   onSalvo: (aviso: AvisoDoGasto) => void
   categorias: Categoria[]
   hoje: DataISO
+  /** Com um gasto, o painel abre preenchido para editar. */
+  gastoParaEditar?: Gasto | null
 }
 
-export default function FolhaNovoGasto({ aberta, onFechar, onSalvo, categorias, hoje }: FolhaNovoGastoProps) {
+export default function FolhaNovoGasto({
+  aberta,
+  onFechar,
+  onSalvo,
+  categorias,
+  hoje,
+  gastoParaEditar = null,
+}: FolhaNovoGastoProps) {
   const reduzirMovimento = useReducedMotion()
   const controlesDeArraste = useDragControls()
 
@@ -63,7 +73,7 @@ export default function FolhaNovoGasto({ aberta, onFechar, onSalvo, categorias, 
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Anotar gasto"
+            aria-label={gastoParaEditar ? 'Editar gasto' : 'Anotar gasto'}
             className="vidro absolute inset-x-0 bottom-0 mx-auto flex max-h-[92dvh] max-w-lg flex-col rounded-t-[var(--r-lg)] border-b-0 pb-[env(safe-area-inset-bottom)]"
             initial={reduzirMovimento ? { opacity: 0 } : { y: '100%' }}
             animate={reduzirMovimento ? { opacity: 1 } : { y: 0 }}
@@ -84,7 +94,13 @@ export default function FolhaNovoGasto({ aberta, onFechar, onSalvo, categorias, 
             >
               <span className="h-1 w-9 rounded-full bg-line-strong" />
             </div>
-            <Formulario categorias={categorias} hoje={hoje} onSalvo={onSalvo} />
+            <Formulario
+              key={gastoParaEditar?.id ?? 'novo'}
+              categorias={categorias}
+              hoje={hoje}
+              onSalvo={onSalvo}
+              gastoParaEditar={gastoParaEditar}
+            />
           </motion.div>
         </div>
       )}
@@ -93,14 +109,20 @@ export default function FolhaNovoGasto({ aberta, onFechar, onSalvo, categorias, 
 }
 
 // O formulário só existe com o painel aberto: cada abertura começa limpa.
-function Formulario({ categorias, hoje, onSalvo }: Pick<FolhaNovoGastoProps, 'categorias' | 'hoje' | 'onSalvo'>) {
+function Formulario({
+  categorias,
+  hoje,
+  onSalvo,
+  gastoParaEditar,
+}: Pick<FolhaNovoGastoProps, 'categorias' | 'hoje' | 'onSalvo'> & { gastoParaEditar: Gasto | null }) {
   const idTitulo = useId()
   const campoValor = useRef<HTMLInputElement>(null)
-  const [textoValor, setTextoValor] = useState('')
-  const [categoriaId, setCategoriaId] = useState<string | null>(null)
-  const [forma, setForma] = useState<FormaPagamento>(lerUltimaForma)
-  const [descricao, setDescricao] = useState('')
-  const [data, setData] = useState(hoje)
+  const editando = gastoParaEditar
+  const [textoValor, setTextoValor] = useState(editando ? valorParaDigitar(editando.valor) : '')
+  const [categoriaId, setCategoriaId] = useState<string | null>(editando?.categoriaId ?? null)
+  const [forma, setForma] = useState<FormaPagamento>(() => editando?.forma ?? lerUltimaForma())
+  const [descricao, setDescricao] = useState(editando?.descricao ?? '')
+  const [data, setData] = useState(editando?.data ?? hoje)
   const [erro, setErro] = useState<{ valor?: string; categoria?: string; salvar?: string }>({})
   const [salvando, setSalvando] = useState(false)
 
@@ -123,16 +145,17 @@ function Formulario({ categorias, hoje, onSalvo }: Pick<FolhaNovoGastoProps, 'ca
     }
 
     setSalvando(true)
+    const campos = { valor, categoriaId, forma, data, ...(descricao.trim() ? { descricao: descricao.trim() } : {}) }
     try {
-      const aviso = await anotarGasto({
-        valor,
-        categoriaId,
-        forma,
-        data,
-        ...(descricao.trim() ? { descricao: descricao.trim() } : {}),
-      })
-      salvarUltimaForma(forma)
-      onSalvo(aviso)
+      if (editando) {
+        // Monta o gasto de novo, sem a descrição antiga: se ela foi apagada, some mesmo.
+        const { descricao: _descricaoAntiga, ...semDescricao } = editando
+        onSalvo(await editarGasto({ ...semDescricao, ...campos }))
+      } else {
+        const aviso = await anotarGasto(campos)
+        salvarUltimaForma(forma)
+        onSalvo(aviso)
+      }
     } catch {
       setErro({ salvar: 'Não deu para salvar o gasto. Tente de novo.' })
       setSalvando(false)
@@ -143,12 +166,16 @@ function Formulario({ categorias, hoje, onSalvo }: Pick<FolhaNovoGastoProps, 'ca
     ...categorias.map((c) => ({ id: c.id, nome: c.nome, cor: `var(--${c.cor})` })),
     { id: FORA_DO_PLANO, nome: 'Fora do plano', cor: 'var(--fg-muted)' },
   ]
+  // Editando um gasto cuja categoria foi apagada: mostra a opção, para ela não sumir sem aviso.
+  if (editando && !opcoesCategoria.some((opcao) => opcao.id === editando.categoriaId)) {
+    opcoesCategoria.push({ id: editando.categoriaId, nome: 'Categoria apagada', cor: 'var(--fg-faint)' })
+  }
   const valorExibido = textoValor.replace('.', ',')
 
   return (
     <form onSubmit={salvar} noValidate className="flex flex-col gap-6 overflow-y-auto px-4 pt-2 pb-4" aria-labelledby={idTitulo}>
       <h2 id={idTitulo} className="rotulo text-center text-[10px] text-fg-muted">
-        Anotar gasto
+        {editando ? 'Editar gasto' : 'Anotar gasto'}
       </h2>
 
       {/* 1. Valor: o número grande é só visual; o campo de verdade fica por cima, invisível */}
@@ -213,33 +240,8 @@ function Formulario({ categorias, hoje, onSalvo }: Pick<FolhaNovoGastoProps, 'ca
         {erro.categoria && <p className="text-small text-danger">{erro.categoria}</p>}
       </fieldset>
 
-      {/* 3. Forma de pagamento: controle segmentado com a mesma lente deslizante */}
-      <fieldset className="flex flex-col">
-        <legend className="rotulo mb-3 text-[10px] text-fg-muted">Forma de pagamento</legend>
-        <div className="grid grid-cols-4 rounded-full border border-line bg-bg-2 p-1">
-          {FORMAS.map((opcao) => {
-            const selecionada = opcao.id === forma
-            return (
-              <button
-                key={opcao.id}
-                type="button"
-                aria-pressed={selecionada}
-                onClick={() => setForma(opcao.id)}
-                className={`relative h-11 rounded-full text-[14px] font-medium ${selecionada ? 'text-fg' : 'text-fg-muted'}`}
-              >
-                {selecionada && (
-                  <motion.span
-                    layoutId="lente-forma"
-                    transition={molaFirme}
-                    className="absolute inset-0 rounded-full border border-line-strong bg-bg-1"
-                  />
-                )}
-                <span className="relative">{opcao.rotulo}</span>
-              </button>
-            )
-          })}
-        </div>
-      </fieldset>
+      {/* 3. Forma de pagamento */}
+      <Segmentado rotulo="Forma de pagamento" opcoes={FORMAS} valor={forma} onChange={setForma} idLente="lente-forma" />
 
       {/* 4. Descrição e 5. Data */}
       <Campo rotulo="Descrição" placeholder="Opcional" value={descricao} onChange={(e) => setDescricao(e.target.value)} />

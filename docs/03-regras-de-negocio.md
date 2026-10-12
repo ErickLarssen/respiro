@@ -16,7 +16,11 @@ contaAtivaNoMes(conta, mes): boolean
 totalContasFixas(contas, mes): number        // soma das ativas
 parcelasRestantes(conta, mesAtual): number | null  // ultimaParcela - mesAtual + 1, mínimo 0; recorrente → null
 ultimaParcelaPorRestantes(mesAtual, restantes): Mes // mesAtual + (restantes − 1)
+fimDasParcelas(contas, mesAtual): { conta, ultimaParcela, liberaEm }[] // parcelas ativas, da que acaba primeiro
+parcelasQueLiberamEm(contas, mes): Conta[]  // parcelas cuja última foi no mês anterior (a reserva sobe em `mes`)
 ```
+
+`fimDasParcelas(contas, "2026-10")` → Facio e fatura PicPay (out/26), perfume (nov/26), notebook (mai/27, libera em jun/27), Shopee (jun/27). `parcelasQueLiberamEm(contas, "2027-06")` → notebook.
 
 Na tela de Ajustes o usuário digita **"parcelas restantes"** (é como ele pensa). O app converte para `ultimaParcela = mesAtual + (restantes − 1)`. Isso evita ter que atualizar a conta todo mês.
 
@@ -177,6 +181,16 @@ resumoDoMes({ plano, gastos, mes, hoje }): {
 **Consequência para o usuário:** o dinheiro de uma compra no crédito continua na conta até o dia 20, mas já está comprometido. O "quanto ainda posso gastar" da tela Início já desconta essa compra, então o saldo do banco não deve ser lido como dinheiro livre.
 
 **Tela Gastos:** mostrar "No crédito este mês: R$ X (vence no dia 20 do mês que vem)". Se o usuário cadastrar o limite do cartão em Ajustes (opcional, `config.limiteCartao`), mostrar também quanto do limite ainda está livre, descontando as contas fixas pagas no crédito.
+
+```ts
+gastoNoCredito(gastos, mes): number          // compras com forma "credito" no mês
+contasNoCredito(contas, mes): number         // contas fixas com pagaNoCredito
+limiteLivre({ limite, gastos, contas, mes }) // limite − gastoNoCredito − contasNoCredito (pode ser negativo)
+```
+
+Como o banco calcula, uma **parcela no crédito ocupa todas as parcelas que ainda faltam**, contando a do mês (`valor × parcelasRestantes`). Uma recorrente no crédito ocupa só a cobrança do mês.
+
+**Caso de teste:** limite R$ 5.000,00 em outubro/2026, com R$ 35,00 de compras no crédito, o Claude Pro (R$ 116,00, recorrente) e o notebook (R$ 395,00, faltam 8) no crédito: 500000 − 3500 − 11600 − 8 × 39500 = **168900**.
 
 ---
 

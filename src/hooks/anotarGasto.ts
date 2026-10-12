@@ -1,6 +1,8 @@
 import type { DadosAviso } from '../components/ui/Aviso'
+import type { Gasto } from '../domain/tipos'
 import {
   adicionarGasto,
+  salvarGasto,
   listarCategorias,
   listarContas,
   listarGastosDoMes,
@@ -46,4 +48,10 @@ export async function anotarGasto(novo: NovoGasto): Promise<AvisoDoGasto> {
     return { tom: 'atencao', texto: `${nome}: restam ${formatarBRL(linha.restante)} este mês` }
   }
   return anotado
+}
+
+/** Salva as mudanças de um gasto que já existe. */
+export async function editarGasto(gasto: Gasto): Promise<AvisoDoGasto> {
+  await salvarGasto(gasto)
+  return { tom: 'ok', texto: `Gasto atualizado: ${formatarBRL(gasto.valor)}` }
 }

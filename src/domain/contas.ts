@@ -31,3 +31,29 @@ export function parcelasRestantes(conta: Conta, mesAtual: Mes): number | null {
 export function ultimaParcelaPorRestantes(mesAtual: Mes, restantes: number): Mes {
   return somarMeses(mesAtual, restantes - 1)
 }
+
+export interface FimDeParcela {
+  conta: Conta
+  ultimaParcela: Mes
+  liberaEm: Mes // primeiro mês sem a parcela: é quando a reserva sobe
+}
+
+/**
+ * Parcelas que ainda não acabaram em `mesAtual`, da que acaba primeiro para a última.
+ * Ex.: "Notebook Dell: última em mai/27, libera R$ 395,00 a partir de jun/27".
+ */
+export function fimDasParcelas(contas: Conta[], mesAtual: Mes): FimDeParcela[] {
+  return contas
+    .filter((conta) => (parcelasRestantes(conta, mesAtual) ?? 0) > 0)
+    .map((conta) => {
+      const ultimaParcela = conta.ultimaParcela ?? mesAtual
+      return { conta, ultimaParcela, liberaEm: somarMeses(ultimaParcela, 1) }
+    })
+    .sort((a, b) => a.ultimaParcela.localeCompare(b.ultimaParcela) || a.conta.ordem - b.conta.ordem)
+}
+
+/** Parcelas cuja última foi no mês anterior a `mes`: em `mes` a reserva sobe por causa delas. */
+export function parcelasQueLiberamEm(contas: Conta[], mes: Mes): Conta[] {
+  const mesAnterior = somarMeses(mes, -1)
+  return contas.filter((conta) => conta.tipo === 'parcela' && conta.ultimaParcela === mesAnterior)
+}

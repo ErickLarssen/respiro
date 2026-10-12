@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatarBRL, lerValorDigitado } from '../dinheiro'
+import { formatarBRL, lerValorDigitado, valorParaDigitar } from '../dinheiro'
 
 // O Intl separa "R$" do número com um espaço que não quebra linha.
 const ESPACO = ' '
@@ -54,5 +54,20 @@ describe('lerValorDigitado', () => {
   it('não aceita separador de milhar', () => {
     expect(lerValorDigitado('1.606,00')).toBeNull()
     expect(lerValorDigitado('1606')).toBe(160600)
+  })
+})
+
+describe('valorParaDigitar', () => {
+  it('escreve centavos como o usuário digitaria', () => {
+    expect(valorParaDigitar(3550)).toBe('35,50')
+    expect(valorParaDigitar(5)).toBe('0,05')
+    expect(valorParaDigitar(160600)).toBe('1606')
+    expect(valorParaDigitar(0)).toBe('0')
+  })
+
+  it('é o inverso de lerValorDigitado', () => {
+    for (const valor of [0, 1, 99, 100, 3550, 5209, 160600]) {
+      expect(lerValorDigitado(valorParaDigitar(valor))).toBe(valor)
+    }
   })
 })

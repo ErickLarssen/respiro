@@ -23,6 +23,11 @@ export default defineConfig([
       // Regras do CLAUDE.md: sem `any` e sem `// @ts-ignore`.
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/ban-ts-comment': ['error', { 'ts-ignore': true }],
+      // Nome começando com "_" = "não uso de propósito" (ex.: tirar um campo de um objeto).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' },
+      ],
     },
   },
 ])

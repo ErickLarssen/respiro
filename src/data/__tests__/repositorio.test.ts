@@ -8,6 +8,7 @@ import {
   apagarGasto,
   apagarTudo,
   comecarDoZero,
+  lerTudo,
   listarCategorias,
   listarContas,
   listarGastosDoMes,
@@ -108,5 +109,21 @@ describe('gastos', () => {
 
     await apagarGasto(gasto.id)
     expect(await listarGastosDoMes('2026-10')).toEqual([])
+  })
+})
+
+describe('lerTudo', () => {
+  it('devolve tudo o que está salvo, gastos por data', async () => {
+    await substituirTudo(dadosIniciais)
+    await adicionarGasto({ data: '2026-10-20', valor: 100, categoriaId: 'lazer', forma: 'pix' })
+    await adicionarGasto({ data: '2026-10-02', valor: 200, categoriaId: 'lazer', forma: 'pix' })
+    const tudo = await lerTudo()
+    expect(tudo.config.renda).toBe(160600)
+    expect(tudo.contas).toHaveLength(9)
+    expect(tudo.gastos.map((g) => g.data)).toEqual(['2026-10-02', '2026-10-20'])
+  })
+
+  it('sem config, não há o que exportar', async () => {
+    await expect(lerTudo()).rejects.toThrow('Ainda não há dados para exportar.')
   })
 })

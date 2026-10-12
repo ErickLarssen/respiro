@@ -439,7 +439,8 @@ Usado no número do anel, no total do mês e na reserva.
 ### 7.11 Gráfico da projeção (tela Plano)
 
 - 12 barras verticais finas (raio de 4px no topo), uma por mês, em `--accent` a 70%; o mês atual em `--accent` cheio e com brilho.
-- Os meses em que uma parcela acaba têm um pequeno marcador acima da barra (losango de 6px em `--ok`), porque é ali que a reserva sobe.
+- O mês em que a reserva sobe porque uma parcela acabou tem um pequeno marcador acima da barra (losango de 6px em `--ok`). O marcador fica no **primeiro mês sem a parcela**: o notebook tem a última parcela em mai/27, e o losango aparece em jun/27. A dica do toque diz "acabou: Notebook Dell".
+- Os valores da grade ficam numa faixa própria à direita, para não cobrir as barras.
 - Grade horizontal muito leve (`--line`), só três linhas, com valores em Geist Mono 10px `--fg-faint`.
 - Tocar numa barra mostra uma dica de vidro com "jun/27 · R$ 775,92 · acumulado R$ 3.462,28".
 - Entrada: as barras crescem de baixo, em cascata de 30ms.

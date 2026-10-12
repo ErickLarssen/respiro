@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import Botao from '../components/ui/Botao'
 import { dadosIniciais } from '../data/dadosIniciais'
 import { comecarDoZero, substituirTudo } from '../data/repositorio'
@@ -6,16 +7,19 @@ import { useHoje } from '../hooks/useHoje'
 
 // Aparece quando ainda não há config salva no aparelho. Ver docs/04-modelo-de-dados.md.
 // Depois de salvar, a tela troca sozinha: o useConfig percebe a config nova no banco.
+// "Começar com meus dados" vai para o Início; "Começar do zero", para Ajustes.
 export default function PrimeiroUso() {
   const hoje = useHoje()
+  const navegar = useNavigate()
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
-  async function comecar(acao: () => Promise<void>) {
+  async function comecar(acao: () => Promise<void>, destino: string) {
     setSalvando(true)
     setErro(null)
     try {
       await acao()
+      navegar(destino, { replace: true })
     } catch {
       setErro('Não deu para salvar os dados neste aparelho. Tente de novo.')
       setSalvando(false)
@@ -27,10 +31,10 @@ export default function PrimeiroUso() {
       <h1 className="font-display text-title tracking-[0.02em]">Boas-vindas ao Respiro</h1>
       <p className="text-fg-muted">Seus dados ficam só neste aparelho. Como você quer começar?</p>
 
-      <Botao disabled={salvando} onClick={() => comecar(() => substituirTudo(dadosIniciais))}>
+      <Botao disabled={salvando} onClick={() => comecar(() => substituirTudo(dadosIniciais), '/')}>
         Começar com meus dados
       </Botao>
-      <Botao variante="secundario" disabled={salvando} onClick={() => comecar(() => comecarDoZero(hoje))}>
+      <Botao variante="secundario" disabled={salvando} onClick={() => comecar(() => comecarDoZero(hoje), '/ajustes')}>
         Começar do zero
       </Botao>
 

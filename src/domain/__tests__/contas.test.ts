@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  fimDasParcelas,
+  parcelasQueLiberamEm,
   contaAtivaNoMes,
   parcelasRestantes,
   totalContasFixas,
@@ -60,5 +62,31 @@ describe('ultimaParcelaPorRestantes', () => {
     const ultima = ultimaParcelaPorRestantes('2026-10', 5)
     const parcela = { ...conta('perfume'), ultimaParcela: ultima }
     expect(parcelasRestantes(parcela, '2026-10')).toBe(5)
+  })
+})
+
+describe('fimDasParcelas', () => {
+  it('lista as parcelas ativas da que acaba primeiro para a última', () => {
+    const fins = fimDasParcelas(contas, '2026-10')
+    expect(fins.map((f) => [f.conta.id, f.ultimaParcela, f.liberaEm])).toEqual([
+      ['facio', '2026-10', '2026-11'],
+      ['picpay-set', '2026-10', '2026-11'],
+      ['perfume', '2026-11', '2026-12'],
+      ['notebook', '2027-05', '2027-06'],
+      ['shopee', '2027-06', '2027-07'],
+    ])
+  })
+
+  it('não lista parcelas que já acabaram nem recorrentes', () => {
+    const ids = fimDasParcelas(contas, '2026-12').map((f) => f.conta.id)
+    expect(ids).toEqual(['notebook', 'shopee'])
+  })
+})
+
+describe('parcelasQueLiberamEm', () => {
+  it('acha as parcelas que acabaram no mês anterior', () => {
+    expect(parcelasQueLiberamEm(contas, '2027-06').map((c) => c.id)).toEqual(['notebook'])
+    expect(parcelasQueLiberamEm(contas, '2026-11').map((c) => c.id)).toEqual(['facio', 'picpay-set'])
+    expect(parcelasQueLiberamEm(contas, '2027-01')).toEqual([])
   })
 })

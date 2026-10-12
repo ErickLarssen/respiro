@@ -53,8 +53,9 @@ respiro/
     │   ├── datas.ts              ← meses "AAAA-MM", soma de meses, dias no mês
     │   ├── feriados.ts           ← Páscoa, feriados nacionais, Carnaval
     │   ├── salario.ts            ← diaDoSalario (N-ésimo dia útil), proximoSalario
-    │   ├── contas.ts             ← contaAtivaNoMes, totalContasFixas, parcelasRestantes
-    │   ├── plano.ts              ← calcularPlano (o coração do app)
+    │   ├── contas.ts             ← contaAtivaNoMes, totalContasFixas, parcelasRestantes, fimDasParcelas
+    │   ├── credito.ts            ← gastoNoCredito, limiteLivre
+    │   ├── plano.ts              ← calcularPlano (o coração do app), fraseEfeitoNaReserva
     │   ├── resumo.ts             ← gasto por categoria, quanto resta, valor por dia
     │   ├── projecao.ts           ← reserva mês a mês nos próximos 12 meses
     │   └── __tests__/            ← um arquivo .test.ts por arquivo acima
@@ -71,7 +72,8 @@ respiro/
     │   ├── usePlanoDoMes.ts
     │   ├── useCategorias.ts
     │   ├── useMesSelecionado.ts  ← mês aberto na tela, guardado na URL (?mes=AAAA-MM)
-    │   ├── anotarGasto.ts        ← salva o gasto e decide o aviso (banco + domínio)
+    │   ├── anotarGasto.ts        ← salva/edita o gasto e decide o aviso (banco + domínio)
+    │   ├── useLayout.ts          ← o que o layout oferece às telas: abrir o painel, mostrar aviso
     │   └── useHoje.ts            ← único lugar que lê o relógio; o domínio recebe "hoje" por parâmetro
     ├── ui/                       ← apoio do design system (docs/08-design.md)
     │   ├── movimento.ts          ← molas do Motion (molaFirme, molaSuave)
@@ -86,12 +88,15 @@ respiro/
     │       ├── SeletorDeMes.tsx
     │       ├── AnelFolego.tsx    ← "quanto ainda posso gastar"
     │       ├── MedidorCategoria.tsx  ← medidor segmentado de um teto
-    │       └── FolhaNovoGasto.tsx    ← painel que sobe de baixo para anotar gasto
+    │       ├── Segmentado.tsx    ← opções lado a lado com a lente deslizante
+    │       ├── GraficoProjecao.tsx ← barras da reserva nos próximos 12 meses
+    │       └── FolhaNovoGasto.tsx    ← painel que sobe de baixo para anotar ou editar gasto
     └── pages/
         ├── PrimeiroUso.tsx       ← "Começar com meus dados" / "Começar do zero"
         ├── Vitrine.tsx           ← só em desenvolvimento (/vitrine)
         ├── Inicio.tsx
         ├── Gastos.tsx
         ├── Plano.tsx
-        └── Ajustes.tsx
+        ├── Ajustes.tsx
+        └── ajustes/              ← uma seção por arquivo: Renda, Contas, Categorias, Backup, Apagar tudo
 ```

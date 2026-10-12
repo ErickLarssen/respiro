@@ -119,6 +119,11 @@ export function mesCurto(mes: Mes): string {
   return `${nomeDoMesSozinho(mes).slice(0, 3)} ${anoDoMes(mes)}`
 }
 
+/** "2027-05" → "mai/27" (listas e gráfico) */
+export function mesAbreviado(mes: Mes): string {
+  return `${nomeDoMesSozinho(mes).slice(0, 3)}/${String(anoDoMes(mes)).slice(-2)}`
+}
+
 /** "2026-10-15" → "15/out" */
 export function diaEMes(data: DataISO): string {
   return `${doisDigitos(diaDaData(data))}/${nomeDoMesSozinho(mesDaData(data)).slice(0, 3)}`

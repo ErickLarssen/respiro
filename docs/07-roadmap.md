@@ -69,10 +69,10 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 
 ## Etapa 4 — Gastos, Plano e Ajustes
 
-- [ ] Tela Gastos (lista por dia, total, total no crédito, editar e apagar)
-- [ ] Tela Plano (conta de cima para baixo, mensagens, gráfico de 12 meses, fim das parcelas)
-- [ ] Tela Ajustes (renda, contas, categorias, prévia do efeito na reserva)
-- [ ] Exportar e importar backup
+- [x] Tela Gastos (lista por dia, total, total no crédito, editar e apagar)
+- [x] Tela Plano (conta de cima para baixo, mensagens, gráfico de 12 meses, fim das parcelas)
+- [x] Tela Ajustes (renda, contas, categorias, prévia do efeito na reserva)
+- [x] Exportar e importar backup
 
 **Pausa:** mude a renda para R$ 1.500 em Ajustes e confira na tela Plano: Churrasco R$ 119,97, Lazer R$ 53,32, Roupas R$ 34,71, reserva R$ 50,01. Volte para R$ 1.606.
 
