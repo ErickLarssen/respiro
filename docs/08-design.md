@@ -201,6 +201,16 @@ Três camadas, em `body::before` (fixas, `pointer-events: none`):
 
 No tema claro, reduza o brilho para 0.35 e a grade para metade da opacidade.
 
+### Luz que segue o mouse (só com mouse)
+
+Sugestão do usuário, aprovada na revisão da vitrine. Com mouse (`(hover: hover) and (pointer: fine)`), uma segunda luz ciano segue o cursor e revela a grade num raio de 280px em volta dele (brilho com raio de 360px). Enquanto ela está acesa, o brilho do topo cai pela metade: a luz "migra" para o cursor.
+
+- O hook `src/ui/useLuzDoCursor.ts` escreve a posição em `--luz-x`/`--luz-y` (no máximo uma vez por quadro) e liga `--luz-forca` (0 a 1). As três são registradas com `@property` para poderem ser animadas.
+- A luz acende em 500ms e acompanha o cursor com 300ms de atraso suave (`--ease-out`). Ao sair da janela, apaga.
+- **Celular:** o efeito não liga. Fica só a luz fixa do topo.
+- **Movimento reduzido:** a luz acompanha o cursor sem atraso e acende e apaga num fade de 120ms.
+- **Exceção consciente à seção 6:** mover um gradiente repinta o fundo. É aceitável porque só acontece no computador; no celular, onde os 60fps importam, o efeito fica desligado.
+
 ---
 
 ## 6. Movimento
@@ -387,7 +397,7 @@ Substitui a barra de progresso lisa. Lembra um painel de instrumentos.
 Usado no número do anel, no total do mês e na reserva.
 
 - Quando o valor muda, os dígitos **rolam** até o novo valor (estilo odômetro), 600ms, `--ease-out`.
-- Cada dígito fica numa caixa de largura fixa (`width: 0.78em`, centralizado), porque os dígitos da Michroma não têm todos a mesma largura. Vírgula, ponto e "R$" ficam fora das caixas.
+- Cada dígito fica numa caixa de largura fixa (`width: 1ch`, centralizado), porque os dígitos da Michroma não têm todos a mesma largura. `1ch` é a largura do "0" na fonte atual: 0,95em na Michroma e 0,6em na Geist Mono. O valor antigo, `0.78em`, cortava a lateral dos dígitos da Michroma. A caixa corta só na vertical (`overflow-y: clip`), onde a coluna rola. Vírgula, ponto e "R$" ficam fora das caixas.
 - "R$" menor (50% do tamanho) e em `--fg-muted`, alinhado ao topo dos dígitos.
 - Movimento reduzido: troca direta, sem rolagem.
 
@@ -460,11 +470,11 @@ Uma rota **só em desenvolvimento** (`import.meta.env.DEV`) que mostra todos os 
 
 Na **Etapa 3**, antes de qualquer tela, faça a subetapa **3.0 — Design system**:
 
-- [ ] Instalar `motion`, `lucide-react` e as fontes (seção 3)
-- [ ] Tokens de cor, tipografia, espaço e movimento em `src/index.css` e `src/ui/movimento.ts`
-- [ ] Fundo da página (seção 5)
-- [ ] Componentes de `src/components/ui/`: `Botao`, `Cartao`, `Valor`, `Etiqueta`, `Campo`, `Aviso`
-- [ ] Rota `/vitrine` mostrando tudo nos dois temas
+- [x] Instalar `motion`, `lucide-react` e as fontes (seção 3)
+- [x] Tokens de cor, tipografia, espaço e movimento em `src/index.css` e `src/ui/movimento.ts`
+- [x] Fundo da página (seção 5)
+- [x] Componentes de `src/components/ui/`: `Botao`, `Cartao`, `Valor`, `Etiqueta`, `Campo`, `Aviso`
+- [x] Rota `/vitrine` mostrando tudo nos dois temas
 
 **Pausa:** abra `/vitrine` no celular e no computador, nos dois temas. Revise cada componente antes de seguir.
 

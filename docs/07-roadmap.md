@@ -57,7 +57,7 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 ## Etapa 3 — Início e anotar gasto
 
 - [ ] Layout com barra de abas inferior e rotas
-- [ ] Tokens de cor (claro e escuro) em `index.css`
+- [x] Tokens de cor (claro e escuro) em `index.css`
 - [ ] `SeletorDeMes`
 - [ ] Tela Início completa (`05-telas-e-fluxos.md`)
 - [ ] `MedidorCategoria`

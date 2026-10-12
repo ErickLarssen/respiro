@@ -47,6 +47,11 @@ Registradas na Etapa 0 (outubro de 2026), com Node.js 24.18.0 e npm 11.16.0.
 | dexie | 4.4.6 |
 | dexie-react-hooks | 4.4.0 |
 | fake-indexeddb (só testes) | 6.2.5 |
+| react-router | 8.4.0 |
+| motion | 14.1.0 |
+| lucide-react | 1.55.0 |
+| @fontsource/michroma | 5.3.0 |
+| @fontsource-variable/geist / geist-mono | 5.3.0 |
 
 ## Documentação
 

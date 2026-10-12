@@ -69,14 +69,21 @@ respiro/
     │   ├── useGastosDoMes.ts
     │   ├── usePlanoDoMes.ts
     │   └── useHoje.ts            ← único lugar que lê o relógio; o domínio recebe "hoje" por parâmetro
+    ├── ui/                       ← apoio do design system (docs/08-design.md)
+    │   ├── movimento.ts          ← molas do Motion (molaFirme, molaSuave)
+    │   └── useSpotlight.ts       ← brilho que segue o cursor/dedo
     ├── components/
-    │   ├── BarraDeAbas.tsx
-    │   ├── SeletorDeMes.tsx
-    │   ├── MedidorCategoria.tsx  ← barra de progresso de um teto
-    │   ├── FolhaNovoGasto.tsx    ← painel que sobe de baixo para anotar gasto
-    │   └── Aviso.tsx
+    │   └── ui/                   ← componentes da seção 7 do 08-design.md
+    │       ├── Botao.tsx, Cartao.tsx, Valor.tsx, Etiqueta.tsx, Campo.tsx
+    │       ├── Aviso.tsx
+    │       ├── BarraDeAbas.tsx
+    │       ├── SeletorDeMes.tsx
+    │       ├── AnelFolego.tsx    ← "quanto ainda posso gastar"
+    │       ├── MedidorCategoria.tsx  ← medidor segmentado de um teto
+    │       └── FolhaNovoGasto.tsx    ← painel que sobe de baixo para anotar gasto
     └── pages/
         ├── PrimeiroUso.tsx       ← "Começar com meus dados" / "Começar do zero"
+        ├── Vitrine.tsx           ← só em desenvolvimento (/vitrine)
         ├── Inicio.tsx
         ├── Gastos.tsx
         ├── Plano.tsx

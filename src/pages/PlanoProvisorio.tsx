@@ -27,12 +27,12 @@ export default function PlanoProvisorio({ config }: { config: Config }) {
 
   return (
     <main className="mx-auto max-w-md p-4">
-      <h1 className="text-xl font-bold">Plano de {mes} (provisório)</h1>
+      <h1 className="font-display text-title">Plano de {mes} (provisório)</h1>
 
       <table className="mt-4 w-full tabular-nums">
         <tbody>
           {linhas.map(([rotulo, valor]) => (
-            <tr key={rotulo} className="border-b border-slate-800">
+            <tr key={rotulo} className="border-b border-line">
               <td className="py-2">{rotulo}</td>
               <td className="py-2 text-right">{formatarBRL(valor)}</td>
             </tr>
@@ -40,7 +40,7 @@ export default function PlanoProvisorio({ config }: { config: Config }) {
         </tbody>
       </table>
 
-      <ul className="mt-4 space-y-1 text-slate-300">
+      <ul className="mt-4 space-y-1 text-fg-muted">
         <li>Situação: {plano.situacao}</li>
         {plano.mensagens.map((mensagem) => (
           <li key={mensagem}>{mensagem}</li>

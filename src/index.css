@@ -1,4 +1,579 @@
 @import "tailwindcss";
 
-/* Os tokens de cor (claro/escuro), fontes e movimento entram na Etapa 3.0.
-   Ver docs/08-design.md, seção 4. */
+/* =====================================================================
+   Design system do Respiro — "Painel de Fôlego". Fonte: docs/08-design.md
+   Componentes nunca usam cor literal: só os tokens abaixo.
+   ===================================================================== */
+
+/* ---------- Tokens: tema CLARO (padrão) ---------- */
+:root {
+  color-scheme: light;
+
+  --bg-0: #eef2f7;
+  --bg-1: #ffffff;
+  --bg-2: #f6f8fb;
+  --glass: rgb(255 255 255 / 0.72);
+  --line: rgb(20 40 80 / 0.08);
+  --line-strong: rgb(20 40 80 / 0.16);
+  --fg: #0b1220;
+  --fg-muted: #556075;
+  --fg-faint: #8a94a6;
+  --accent: #0e7490;
+  --accent-deep: #155e75;
+  --accent-glow: rgb(14 116 144 / 0.2);
+  --on-accent: #ffffff;
+
+  --ok: #0f9f6e;
+  --warn: #b7791f;
+  --danger: #d92d50;
+
+  --c1: #0d9488;
+  --c2: #c2410c;
+  --c3: #6d28d9;
+  --c4: #a16207;
+  --c5: #1d6fd8;
+
+  /* Atmosfera do fundo (mais suave no claro) */
+  --atmosfera-brilho: 35%;
+  --atmosfera-grade: 0.5;
+
+  /* Forma */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --brilho-superior: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --sombra-flutuante: 0 16px 48px -12px rgb(20 40 80 / 0.25);
+
+  /* Durações (as curvas --ease-out e --ease-in-out ficam no @theme static) */
+  --d-1: 120ms; /* toque, press */
+  --d-2: 200ms; /* hover, troca de cor */
+  --d-3: 320ms; /* troca de tela, abertura */
+  --d-4: 600ms; /* números contando, entrada de medidores */
+}
+
+/* ---------- Tokens: tema ESCURO (principal; só redefine tokens) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --bg-0: #06080c;
+    --bg-1: #0b0f16;
+    --bg-2: #121824;
+    --glass: rgb(14 19 28 / 0.72);
+    --line: rgb(170 195 255 / 0.08);
+    --line-strong: rgb(170 195 255 / 0.16);
+    --fg: #e9eef6;
+    --fg-muted: #8e98aa;
+    --fg-faint: #5b6578;
+    --accent: #6ee7f9;
+    --accent-deep: #0ea5c6;
+    --accent-glow: rgb(110 231 249 / 0.28);
+    --on-accent: #04141a;
+
+    --ok: #3ddc97;
+    --warn: #f5b54a;
+    --danger: #ff5c7a;
+
+    --c1: #5eead4;
+    --c2: #ff9f6e;
+    --c3: #b69cff;
+    --c4: #f2d16b;
+    --c5: #7cc4ff;
+
+    --atmosfera-brilho: 60%;
+    --atmosfera-grade: 1;
+    --sombra-flutuante: 0 16px 48px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* ---------- Tokens ligados ao Tailwind: bg-bg-1, text-fg, border-line... ---------- */
+@theme inline {
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-glass: var(--glass);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-glow: var(--accent-glow);
+  --color-on-accent: var(--on-accent);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-c1: var(--c1);
+  --color-c2: var(--c2);
+  --color-c3: var(--c3);
+  --color-c4: var(--c4);
+  --color-c5: var(--c5);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+}
+
+/* Valores fixos (iguais nos dois temas). "static" garante que viram variáveis CSS
+   mesmo quando nenhuma classe do Tailwind as usa, porque o CSS abaixo também usa. */
+@theme static {
+  --font-display: "Michroma", "Eurostile Extended", "Arial Black", sans-serif;
+  --font-sans: "Geist Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  /* Escala tipográfica (seção 3): text-hero, text-title... */
+  --text-hero: 44px;
+  --text-hero--line-height: 1;
+  --text-title: 20px;
+  --text-title--line-height: 1.2;
+  --text-amount: 22px;
+  --text-amount--line-height: 1.2;
+  --text-body: 15px;
+  --text-body--line-height: 1.5;
+  --text-small: 13px;
+  --text-small--line-height: 1.4;
+  --text-label: 10.5px;
+  --text-label--line-height: 1;
+  --text-num: 14px;
+  --text-num--line-height: 1.2;
+
+  /* Movimento (seção 6) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* padrão: entradas e transições */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ---------- Base ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Fundo da página (seção 5): grade técnica + brilho no topo + ruído ---------- */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---------- Luz que segue o mouse ----------
+   O hook useLuzDoCursor (src/ui) escreve a posição do mouse em --luz-x/--luz-y e
+   liga --luz-forca (0 = apagada, 1 = acesa). Registradas com @property, essas
+   variáveis podem ser animadas: a luz desliza atrás do cursor em vez de pular.
+   No celular o hook não liga, a força fica 0 e só a luz do topo aparece. */
+@property --luz-x {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 50vw;
+}
+@property --luz-y {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --luz-forca {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+html {
+  --luz-raio-grade: 280px; /* até onde a grade aparece em volta do cursor */
+  --luz-raio-brilho: 360px;
+  transition: --luz-forca 500ms var(--ease-out);
+}
+/* Com a luz já acesa, a posição também anima (o "atraso suave" atrás do cursor).
+   Na primeira entrada do mouse não: a luz nasce direto no cursor. */
+html[data-luz] {
+  transition:
+    --luz-forca 500ms var(--ease-out),
+    --luz-x 300ms var(--ease-out),
+    --luz-y 300ms var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-luz] {
+    transition: --luz-forca 120ms linear;
+  }
+}
+
+/* Grade de 48px: aparece no topo (some em direção ao fundo) e em volta do cursor.
+   As duas máscaras se somam: onde qualquer uma é opaca, a grade aparece. */
+body::before {
+  opacity: var(--atmosfera-grade);
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image:
+    radial-gradient(ellipse at top, #000 20%, transparent 70%),
+    radial-gradient(
+      calc(var(--luz-raio-grade) * var(--luz-forca)) circle at var(--luz-x) var(--luz-y),
+      #000,
+      transparent
+    );
+  mask-image:
+    radial-gradient(ellipse at top, #000 20%, transparent 70%),
+    radial-gradient(
+      calc(var(--luz-raio-grade) * var(--luz-forca)) circle at var(--luz-x) var(--luz-y),
+      #000,
+      transparent
+    );
+}
+
+/* Brilho do cursor + brilho no topo + ruído (a opacidade 0.025 do ruído fica no próprio SVG).
+   Com a luz acesa, o brilho do topo cai pela metade: a luz "migra" para o cursor. */
+body::after {
+  background-image:
+    radial-gradient(
+      calc(var(--luz-raio-brilho) * var(--luz-forca)) circle at var(--luz-x) var(--luz-y),
+      color-mix(in srgb, var(--accent-glow) var(--atmosfera-brilho), transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      600px 400px at 50% -10%,
+      color-mix(
+        in srgb,
+        var(--accent-glow) calc(var(--atmosfera-brilho) * (1 - var(--luz-forca) * 0.5)),
+        transparent
+      ),
+      transparent 70%
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+/* ---------- Utilitários ---------- */
+@layer components {
+  /* Rótulo técnico: Michroma pequena, caixa alta, espaçada */
+  .rotulo {
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  /* Vidro: barra de abas, painel, seletor de mês, avisos, dicas. Nunca em cartões de lista. */
+  .vidro {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--brilho-superior), var(--sombra-flutuante);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .vidro {
+      background: var(--bg-2);
+    }
+  }
+}
+
+/* =====================================================================
+   Botões (seção 7.2)
+   ===================================================================== */
+@property --angulo {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@layer components {
+  .btn {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: var(--r-pill);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      transform var(--d-1) var(--ease-out),
+      box-shadow var(--d-2) var(--ease-out),
+      border-color var(--d-2) var(--ease-out);
+    user-select: none;
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* --- Primário: gradiente oxigênio, feixe na borda, faixa de brilho no hover --- */
+  .btn-primario {
+    overflow: hidden;
+    color: var(--on-accent);
+    background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      0 8px 24px -8px var(--accent-glow);
+  }
+  /* feixe de luz percorrendo a borda */
+  .btn-primario::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from var(--angulo), transparent 0 75%, #fff 85%, transparent 95%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: girar 4s linear infinite;
+    pointer-events: none;
+  }
+  .btn-primario[data-carregando]::before {
+    animation-duration: 1.2s;
+  }
+  .btn-primario:disabled::before {
+    animation: none;
+    opacity: 0;
+  }
+  /* faixa de brilho diagonal (só no hover com mouse) */
+  .btn-primario::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+    transform: translateX(-120%);
+  }
+
+  /* --- Secundário e Perigo: superfície com borda que acende onde o cursor está --- */
+  .btn-secundario,
+  .btn-perigo {
+    background: var(--bg-2);
+    border: 1px solid var(--line-strong);
+    color: var(--fg);
+  }
+  .btn-perigo {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  }
+  .btn-secundario::before,
+  .btn-perigo::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      120px circle at var(--mx, 50%) var(--my, 50%),
+      var(--brilho-borda, var(--accent)),
+      transparent 70%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity var(--d-2) var(--ease-out);
+    pointer-events: none;
+  }
+  .btn-perigo {
+    --brilho-borda: var(--danger);
+  }
+
+  /* --- Fantasma: só texto, sublinhado que cresce da esquerda --- */
+  .btn-fantasma {
+    min-height: 44px;
+    padding: 0 4px;
+    color: var(--accent);
+    background: none;
+  }
+  .btn-fantasma::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 12px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--d-2) var(--ease-out);
+  }
+
+  /* --- Carregando: três pontos pulsando --- */
+  .pontos {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .pontos > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulsar 900ms var(--ease-in-out) infinite;
+  }
+  .pontos > span:nth-child(2) {
+    animation-delay: 150ms;
+  }
+  .pontos > span:nth-child(3) {
+    animation-delay: 300ms;
+  }
+}
+
+@keyframes girar {
+  to {
+    --angulo: 360deg;
+  }
+}
+@keyframes pulsar {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =====================================================================
+   Cartão com spotlight (seção 7.3)
+   ===================================================================== */
+@layer components {
+  .cartao {
+    position: relative;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 16px;
+    transition: border-color var(--d-2) var(--ease-out);
+  }
+  .cartao::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      260px circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in oklch, var(--accent) 12%, transparent),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity var(--d-3) var(--ease-out);
+  }
+  /* No celular: o brilho aparece no ponto tocado e some em seguida */
+  .cartao:active::before {
+    opacity: 1;
+    transition-duration: var(--d-1);
+  }
+}
+
+/* =====================================================================
+   Contador de valor (seção 7.6)
+   ===================================================================== */
+@layer components {
+  .valor {
+    display: inline-flex;
+    align-items: flex-start;
+    white-space: nowrap;
+  }
+  .valor-moeda {
+    font-size: 0.5em;
+    line-height: 1;
+    margin-right: 0.3em;
+    color: var(--fg-muted);
+  }
+  /* Cada dígito numa caixa de largura fixa; dentro, uma coluna 0–9 que rola.
+     1ch = largura do "0" na fonte atual (0,95em na Michroma, 0,6em na Geist Mono).
+     Corta só na vertical, onde a coluna rola: a lateral do glifo nunca é cortada. */
+  .valor-digito {
+    display: inline-block;
+    width: 1ch;
+    height: 1.15em;
+    overflow-x: visible;
+    overflow-y: clip;
+    text-align: center;
+  }
+  .valor-coluna {
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--d-4) var(--ease-out);
+  }
+  .valor-coluna > span {
+    height: 1.15em;
+    line-height: 1.15em;
+  }
+  .valor-sinal {
+    line-height: 1.15em;
+  }
+}
+
+/* =====================================================================
+   Hover só para mouse (seção 8). No celular, o retorno é o :active.
+   ===================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  .btn-primario:hover:not(:disabled) {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      0 10px 32px -6px var(--accent-glow);
+  }
+  .btn-primario:hover:not(:disabled)::after {
+    transform: translateX(120%);
+    transition: transform 700ms var(--ease-out);
+  }
+  .btn-secundario:hover:not(:disabled)::before,
+  .btn-perigo:hover:not(:disabled)::before {
+    opacity: 1;
+  }
+  .btn-fantasma:hover:not(:disabled)::after {
+    transform: scaleX(1);
+  }
+  .cartao:hover {
+    border-color: var(--line-strong);
+  }
+  .cartao:hover::before {
+    opacity: 1;
+  }
+}
+
+/* =====================================================================
+   Movimento reduzido (seção 6): sem loops, sem rolagem de números
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .btn-primario::before,
+  .pontos > span {
+    animation: none;
+  }
+  .valor-coluna {
+    transition: none;
+  }
+}
