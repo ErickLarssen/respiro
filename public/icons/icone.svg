@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Ícone do Respiro: o anel de fôlego (docs/08-design.md, seções 7.4 e 10).
+       Cor do app (#6EE7F9) e verde da reserva (#3DDC97) sobre o fundo (#06080C), sem texto.
+       O anel cabe no círculo central de 80% do ícone: a versão "maskable" pode
+       ser recortada em círculo, gota ou quadrado sem cortar o desenho. -->
+  <defs>
+    <linearGradient id="oxigenio" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6EE7F9" />
+      <stop offset="1" stop-color="#3DDC97" />
+    </linearGradient>
+    <radialGradient id="brilho" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6EE7F9" stop-opacity="0.22" />
+      <stop offset="1" stop-color="#6EE7F9" stop-opacity="0" />
+    </radialGradient>
+    <filter id="luz" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" />
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="#06080C" />
+  <circle cx="256" cy="256" r="200" fill="url(#brilho)" />
+
+  <!-- Trilho -->
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#6EE7F9" stroke-opacity="0.12" stroke-width="36" />
+  <!-- Arco de 75%: começa no topo, sentido horário (circunferência = 942,48) -->
+  <circle
+    cx="256" cy="256" r="150" fill="none"
+    stroke="url(#oxigenio)" stroke-width="36" stroke-linecap="round"
+    stroke-dasharray="942.48" stroke-dashoffset="235.62"
+    transform="rotate(-90 256 256)"
+  />
+  <!-- Ponta brilhante, no fim do arco (270° a partir do topo = ponto à esquerda) -->
+  <circle cx="106" cy="256" r="14" fill="#3DDC97" filter="url(#luz)" />
+  <circle cx="106" cy="256" r="9" fill="#FFFFFF" />
+</svg>

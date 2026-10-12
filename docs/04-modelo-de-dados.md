@@ -87,3 +87,7 @@ Se a tabela `config` estiver vazia ao abrir o app, mostrar uma tela com duas op�
 Como os dados só existem no aparelho, apagar os dados do navegador apaga tudo. A tela Ajustes tem:
 - **Exportar backup**: gera `respiro-backup-AAAA-MM-DD.json` com `{ versao: 1, config, contas, categorias, gastos }`.
 - **Importar backup**: lê o arquivo, valida a `versao` e os campos obrigatórios, mostra um resumo ("12 contas, 4 categorias, 87 gastos") e só substitui depois de o usuário confirmar.
+
+## Armazenamento persistente
+
+Ao abrir o app já com dados, `src/data/armazenamento.ts` chama `navigator.storage.persist()`. Assim, o navegador não apaga o IndexedDB sozinho quando o aparelho fica sem espaço; só o usuário pode apagar. No Chrome do Android, o pedido costuma ser aceito com o app instalado na tela inicial, e nenhuma pergunta aparece. Se o navegador recusar, o app funciona igual, e o backup continua sendo a proteção.

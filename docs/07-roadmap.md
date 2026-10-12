@@ -80,10 +80,10 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 
 ## Etapa 5 — App no celular (PWA) e deploy
 
-- [ ] Ícones (192, 512, maskable) em `public/icons/`
-- [ ] `vite-plugin-pwa`: manifest (nome "Respiro", cores do tema, `display: "standalone"`) e service worker
-- [ ] Testar offline com `npm run build && npm run preview`
-- [ ] Subir para o GitHub
+- [x] Ícones (192, 512, maskable) em `public/icons/`
+- [x] `vite-plugin-pwa`: manifest (nome "Respiro", cores do tema, `display: "standalone"`) e service worker
+- [x] Testar offline com `npm run build && npm run preview`
+- [x] Subir para o GitHub
 - [ ] Deploy na Vercel (passo a passo para o usuário, tela por tela)
 - [ ] Instalar no celular: Chrome → menu ⋮ → "Adicionar à tela inicial"
 - [ ] Exportar o primeiro backup

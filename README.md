@@ -23,10 +23,17 @@ npm test           # roda os testes (Vitest)
 npm run typecheck  # confere os tipos (TypeScript)
 npm run lint       # confere o estilo do código (ESLint)
 npm run build      # gera a versão de produção em dist/
-npm run preview    # serve a versão de produção localmente
+npm run preview    # serve a versão de produção localmente (com o PWA e o modo offline)
+npm run icones     # gera os ícones do PWA a partir de public/icons/icone.svg
 ```
 
 Para abrir no celular na mesma rede Wi-Fi: `npm run dev -- --host` e acesse o endereço "Network" que aparecer.
+
+## Publicação
+
+O app é publicado na Vercel a cada `git push` na branch `main`. O `vercel.json` faz qualquer endereço (`/gastos`, `/plano`...) abrir o app. É um PWA: no celular, abra o endereço no Chrome e use **⋮ → Adicionar à tela inicial** (ou **Instalar app**). Depois da primeira visita, funciona sem internet.
+
+**Os dados ficam só no aparelho.** Exporte um backup em Ajustes → Backup de vez em quando.
 
 ## Versões instaladas
 
@@ -52,6 +59,8 @@ Registradas na Etapa 0 (outubro de 2026), com Node.js 24.18.0 e npm 11.16.0.
 | lucide-react | 1.55.0 |
 | @fontsource/michroma | 5.3.0 |
 | @fontsource-variable/geist / geist-mono | 5.3.0 |
+| vite-plugin-pwa | 2.0.0 |
+| @vite-pwa/assets-generator | 2.0.0 |
 
 ## Documentação
 

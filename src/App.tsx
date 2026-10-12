@@ -1,8 +1,9 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import Aviso, { type DadosAviso } from './components/ui/Aviso'
 import BarraDeAbas from './components/ui/BarraDeAbas'
 import FolhaNovoGasto from './components/ui/FolhaNovoGasto'
+import { pedirArmazenamentoPersistente } from './data/armazenamento'
 import type { Gasto } from './domain/tipos'
 import type { AvisoDoGasto } from './hooks/anotarGasto'
 import type { ContextoDoLayout } from './hooks/useLayout'
@@ -35,6 +36,11 @@ function Layout() {
   const [folhaAberta, setFolhaAberta] = useState(false)
   const [gastoParaEditar, setGastoParaEditar] = useState<Gasto | null>(null)
   const [aviso, setAviso] = useState<DadosAviso | null>(null)
+
+  // Já há dados no aparelho: pede para o navegador não apagá-los sozinho.
+  useEffect(() => {
+    void pedirArmazenamentoPersistente()
+  }, [])
 
   function mostrarAviso(novoAviso: AvisoDoGasto) {
     setAviso({ ...novoAviso, id: Date.now() })
