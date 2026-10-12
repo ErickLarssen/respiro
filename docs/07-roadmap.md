@@ -27,15 +27,15 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 
 **Objetivo:** todo o cálculo do app pronto e testado, **sem nenhuma tela**.
 
-- [ ] `tipos.ts`
-- [ ] `dinheiro.ts`: `formatarBRL`, `lerValorDigitado` ("35,5" → 3550; texto inválido → `null`)
-- [ ] `datas.ts`: somar meses, dias no mês, mês de uma data
-- [ ] `feriados.ts` + testes (Páscoa 2026 e 2027, Carnaval 2027)
-- [ ] `salario.ts` + todos os casos de teste da seção 3
-- [ ] `contas.ts` + todos os casos de teste da seção 1
-- [ ] `plano.ts` + todos os casos da seção 2 + teste da propriedade "tudo soma a renda"
-- [ ] `resumo.ts` + caso de teste da seção 4
-- [ ] `projecao.ts` + caso de teste da seção 6
+- [x] `tipos.ts`
+- [x] `dinheiro.ts`: `formatarBRL`, `lerValorDigitado` ("35,5" → 3550; texto inválido → `null`)
+- [x] `datas.ts`: somar meses, dias no mês, mês de uma data
+- [x] `feriados.ts` + testes (Páscoa 2026 e 2027, Carnaval 2027)
+- [x] `salario.ts` + todos os casos de teste da seção 3
+- [x] `contas.ts` + todos os casos de teste da seção 1
+- [x] `plano.ts` + todos os casos da seção 2 + teste da propriedade "tudo soma a renda"
+- [x] `resumo.ts` + caso de teste da seção 4
+- [x] `projecao.ts` + caso de teste da seção 6
 
 **Pausa:** rode `npm test`. Leia `plano.ts` com calma: é o coração do app. Peça ao Claude Code para explicar qualquer linha que não ficar clara.
 

@@ -14,7 +14,8 @@ Uma conta é de um de dois tipos:
 ```ts
 contaAtivaNoMes(conta, mes): boolean
 totalContasFixas(contas, mes): number        // soma das ativas
-parcelasRestantes(conta, mesAtual): number   // ultimaParcela - mesAtual + 1, mínimo 0
+parcelasRestantes(conta, mesAtual): number | null  // ultimaParcela - mesAtual + 1, mínimo 0; recorrente → null
+ultimaParcelaPorRestantes(mesAtual, restantes): Mes // mesAtual + (restantes − 1)
 ```
 
 Na tela de Ajustes o usuário digita **"parcelas restantes"** (é como ele pensa). O app converte para `ultimaParcela = mesAtual + (restantes − 1)`. Isso evita ter que atualizar a conta todo mês.
@@ -80,7 +81,7 @@ senão:
 |---|---|---|
 | `"folga"` | Os desejos couberam e sobrou além da reserva mínima | "Seus planos couberam. Os R$ X que sobraram vão para a reserva." |
 | `"justo"` | Os desejos couberam exatamente, sem sobra além da mínima | "Seus planos couberam, com a reserva mínima de R$ X." |
-| `"apertado"` | Os flexíveis foram reduzidos | "Para guardar R$ X, reduzi os gastos flexíveis em N%." |
+| `"apertado"` | Os flexíveis foram reduzidos | "Para guardar R$ X, reduzi os gastos flexíveis em N%." X é a reserva **mínima**; N é o corte arredondado para o inteiro mais próximo (33,35% → 33%) |
 | `"critico"` | Até os essenciais ou a reserva mínima foram cortados | "Depois das contas fixas sobram só R$ X. Não dá para cobrir os essenciais e a reserva." |
 | `"deficit"` | `sobra < 0` | "As contas fixas passam da renda em R$ X." Todos os tetos e a reserva ficam 0. |
 
@@ -103,6 +104,12 @@ No caso de renda 150000: sobram 20801 para flexíveis que desejam 31209. Churras
 
 ---
 
+## 2b. Valor digitado (`lerValorDigitado`)
+
+Aceita reais inteiros e, opcionalmente, **vírgula ou ponto** seguido de 1 ou 2 dígitos de centavos: `"35"` → 3500, `"35,5"` e `"35.50"` → 3550. O ponto vale como decimal porque alguns teclados numéricos de celular não têm vírgula. **Separador de milhar não é aceito**: `"1.606,00"` → `null` (digite `"1606"`). Vazio, letras, sinal negativo ou `"R$"` → `null`. Zero é lido como `0`; quem recusa zero é a tela.
+
+---
+
 ## 3. Dia do salário
 
 O salário cai no **N-ésimo dia útil** do mês (`config.diaUtilSalario`, hoje `10`). Dia útil = segunda a sexta que não seja feriado.
@@ -117,8 +124,10 @@ Calcule a Páscoa pelo algoritmo de Meeus/Jones/Butcher (computus gregoriano).
 pascoa(ano): string                          // "AAAA-MM-DD"
 feriados(ano): Set<string>
 diaDoSalario(mes, n): string                 // "AAAA-MM-DD"
-proximoSalario(hoje, n): string              // se o salário do mês já passou, o do mês seguinte
+proximoSalario(hoje, n): string              // se o salário do mês já passou, o do mês seguinte; no próprio dia, hoje
 ```
+
+Se o mês tiver menos de N dias úteis (ex.: fevereiro/2027 tem 18), `diaDoSalario` devolve o **último dia útil** do mês.
 
 **Casos de teste** (`n = 10`):
 
@@ -143,14 +152,14 @@ resumoDoMes({ plano, gastos, mes, hoje }): {
   tetoTotal,            // soma dos tetos
   gastoTotal,           // soma dos gastos do mês, inclusive "fora do plano"
   restante,             // tetoTotal − gastoTotal (pode ser negativo)
-  porDia,               // só se mes === mês de hoje: max(restante, 0) / dias restantes, em centavos (floor)
-  diasRestantes,        // do dia de hoje até o último dia do mês, inclusive
+  porDia,               // só se mes === mês de hoje: max(restante, 0) / dias restantes, em centavos (floor); senão null
+  diasRestantes,        // do dia de hoje até o último dia do mês, inclusive; senão null
   categorias: [{ id, teto, gasto, restante, estado }]
 }
 ```
 
 - **Estado de cada categoria:** `"ok"` (abaixo de 80% do teto), `"atencao"` (de 80% a 100%), `"estourou"` (acima de 100%). Teto 0 com gasto > 0 é `"estourou"`.
-- Um gasto cuja categoria foi apagada conta como **"fora do plano"**.
+- Um gasto cuja categoria foi apagada conta como **"fora do plano"** (id `"fora"`). Se houver gastos fora do plano, eles aparecem numa linha a mais no fim de `categorias`, com teto 0.
 - Se `restante < 0`, mostrar: "Você passou do plano em R$ X. Isso sai da reserva deste mês."
 
 **Caso de teste:** outubro/2026, hoje 2026-10-11, gastos: Lazer 3500. → `tetoTotal` 41209, `gastoTotal` 3500, `restante` 37709, `diasRestantes` 21, `porDia` 1795; Lazer `restante` 4500, estado `"ok"`.

@@ -5,7 +5,7 @@
 - **Nomes do domínio em português** (`calcularPlano`, `Conta`, `ultimaParcela`), porque as regras de negócio estão em português e assim o código lê igual à documentação. Termos técnicos padrão continuam em inglês (`useLiveQuery`, `props`, `id`).
 - Um componente por arquivo, `PascalCase.tsx`. Funções e variáveis em `camelCase`.
 - Funções de `src/domain/` recebem tudo por parâmetro e não alteram os argumentos (sem mutação).
-- Nada de número mágico solto: `0.8` (limite de "atenção") vira `const LIMITE_ATENCAO = 0.8` em `resumo.ts`.
+- Nada de número mágico solto: o limite de "atenção" vira `const LIMITE_ATENCAO = 80` (em %) em `resumo.ts`. Fica em % para a comparação usar só inteiros (`gasto * 100 >= teto * 80`), sem erro de arredondamento de `0.8`.
 - Valores em centavos sempre com nome claro: `valor`, `renda`, `teto` são centavos. Nunca guardar `"R$ 35,00"` como dado.
 
 ## Testes
