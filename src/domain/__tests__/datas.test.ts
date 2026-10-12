@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   anoDoMes,
+  dataCurta,
   diaDaData,
+  diaEMes,
+  mesCurto,
+  mesPorExtenso,
+  nomeDoMes,
+  semanaCurta,
   diaDaSemana,
   diasEntre,
   diasNoMes,
@@ -83,5 +89,26 @@ describe('diaDaSemana', () => {
     expect(diaDaSemana('2026-10-11')).toBe(0) // domingo
     expect(diaDaSemana('2026-10-12')).toBe(1) // segunda
     expect(diaDaSemana('2026-10-15')).toBe(4) // quinta
+  })
+})
+
+describe('textos de data para a interface', () => {
+  it('escreve o mês por extenso', () => {
+    expect(mesPorExtenso('2026-10')).toBe('outubro de 2026')
+    expect(mesPorExtenso('2027-03')).toBe('março de 2027')
+    expect(nomeDoMes('2026-11')).toBe('novembro')
+  })
+
+  it('abrevia o mês com 3 letras', () => {
+    expect(mesCurto('2026-10')).toBe('out 2026')
+    expect(mesCurto('2027-02')).toBe('fev 2027')
+  })
+
+  it('escreve datas curtas com o dia da semana', () => {
+    expect(dataCurta('2026-10-15')).toBe('qui, 15/out')
+    expect(dataCurta('2026-10-11')).toBe('dom, 11/out')
+    expect(dataCurta('2027-02-06')).toBe('sáb, 06/fev')
+    expect(diaEMes('2026-10-31')).toBe('31/out')
+    expect(semanaCurta('2026-10-15')).toBe('qui')
   })
 })

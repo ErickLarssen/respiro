@@ -90,3 +90,46 @@ export function diasEntre(de: DataISO, ate: DataISO): number {
 export function diaDaSemana(data: DataISO): number {
   return new Date(paraUTC(data)).getUTCDay()
 }
+
+// ---------- Textos para a interface (docs/06-convencoes.md) ----------
+// Listas próprias em vez de Intl: o Intl escreve "qui." com ponto e varia entre navegadores.
+
+const MESES = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+]
+const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
+
+function nomeDoMesSozinho(mes: Mes): string {
+  return MESES[partesDoMes(mes)[1] - 1] ?? ''
+}
+
+/** "2026-10" → "outubro de 2026" (títulos) */
+export function mesPorExtenso(mes: Mes): string {
+  return `${nomeDoMesSozinho(mes)} de ${anoDoMes(mes)}`
+}
+
+/** "2026-10" → "outubro" */
+export function nomeDoMes(mes: Mes): string {
+  return nomeDoMesSozinho(mes)
+}
+
+/** "2026-10" → "out 2026" (seletor de mês; a tela põe em caixa alta) */
+export function mesCurto(mes: Mes): string {
+  return `${nomeDoMesSozinho(mes).slice(0, 3)} ${anoDoMes(mes)}`
+}
+
+/** "2026-10-15" → "15/out" */
+export function diaEMes(data: DataISO): string {
+  return `${doisDigitos(diaDaData(data))}/${nomeDoMesSozinho(mesDaData(data)).slice(0, 3)}`
+}
+
+/** "2026-10-15" → "qui" */
+export function semanaCurta(data: DataISO): string {
+  return SEMANA[diaDaSemana(data)] ?? ''
+}
+
+/** "2026-10-15" → "qui, 15/out" (datas curtas) */
+export function dataCurta(data: DataISO): string {
+  return `${semanaCurta(data)}, ${diaEMes(data)}`
+}

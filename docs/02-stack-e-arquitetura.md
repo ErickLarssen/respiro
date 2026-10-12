@@ -63,15 +63,21 @@ respiro/
     │   ├── repositorio.ts        ← salvarConfig, adicionarGasto, apagarGasto...
     │   ├── backup.ts             ← exportar/importar JSON
     │   ├── dadosIniciais.ts      ← importa docs/dados-iniciais.json (sem copiar) para o primeiro uso
+    │   ├── preferencias.ts       ← última forma de pagamento (localStorage)
     │   └── __tests__/            ← testes do repositório com fake-indexeddb
     ├── hooks/
     │   ├── useConfig.ts
     │   ├── useGastosDoMes.ts
     │   ├── usePlanoDoMes.ts
+    │   ├── useCategorias.ts
+    │   ├── useMesSelecionado.ts  ← mês aberto na tela, guardado na URL (?mes=AAAA-MM)
+    │   ├── anotarGasto.ts        ← salva o gasto e decide o aviso (banco + domínio)
     │   └── useHoje.ts            ← único lugar que lê o relógio; o domínio recebe "hoje" por parâmetro
     ├── ui/                       ← apoio do design system (docs/08-design.md)
     │   ├── movimento.ts          ← molas do Motion (molaFirme, molaSuave)
-    │   └── useSpotlight.ts       ← brilho que segue o cursor/dedo
+    │   ├── useSpotlight.ts       ← brilho que segue o cursor/dedo
+    │   ├── useLuzDoCursor.ts     ← luz do fundo que segue o mouse
+    │   └── useDeslizarHorizontal.ts ← deslizar o dedo para trocar o mês
     ├── components/
     │   └── ui/                   ← componentes da seção 7 do 08-design.md
     │       ├── Botao.tsx, Cartao.tsx, Valor.tsx, Etiqueta.tsx, Campo.tsx

@@ -13,7 +13,9 @@ export default function Etiqueta({ estado }: { estado: EstadoEtiqueta }) {
   const { texto, cor } = ESTILO[estado]
   return (
     <span
-      className="inline-flex h-5 items-center rounded-full px-2 font-display text-[9.5px] leading-none tracking-[0.14em] uppercase"
+      className={`inline-flex h-5 items-center rounded-full px-2 font-display text-[9.5px] leading-none tracking-[0.14em] uppercase ${
+        estado === 'estourou' ? 'etiqueta-piscar' : ''
+      }`}
       style={{ color: cor, background: `color-mix(in srgb, ${cor} 14%, transparent)` }}
     >
       {texto}

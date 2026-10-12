@@ -1,52 +1,50 @@
-import { mesDaData } from '../domain/datas'
+import SeletorDeMes from '../components/ui/SeletorDeMes'
+import { mesPorExtenso } from '../domain/datas'
 import { formatarBRL } from '../domain/dinheiro'
-import { proximoSalario } from '../domain/salario'
-import type { Config } from '../domain/tipos'
-import { useGastosDoMes } from '../hooks/useGastosDoMes'
-import { useHoje } from '../hooks/useHoje'
+import { useMesSelecionado } from '../hooks/useMesSelecionado'
 import { usePlanoDoMes } from '../hooks/usePlanoDoMes'
 
-// Página PROVISÓRIA da Etapa 2: mostra o plano do mês em texto puro, só para
-// conferir que banco + hooks + domínio estão ligados. Sai na Etapa 3.
-export default function PlanoProvisorio({ config }: { config: Config }) {
-  const hoje = useHoje()
-  const mes = mesDaData(hoje)
+// Página PROVISÓRIA da aba Plano: mostra o plano do mês em texto puro.
+// A tela Plano de verdade (conta de cima para baixo, gráfico de 12 meses) chega na Etapa 4.
+export default function PlanoProvisorio() {
+  const { mes, mesAtual, trocarMes } = useMesSelecionado()
   const dados = usePlanoDoMes(mes)
-  const gastos = useGastosDoMes(mes)
 
-  if (!dados) return <p className="p-4">Carregando…</p>
+  if (!dados) return null
 
   const { plano, categorias } = dados
   const linhas: [string, number][] = [
     ['Renda', plano.renda],
     ['− Contas fixas', plano.contasFixas],
     ['= Sobra', plano.sobra],
-    ...categorias.map((c): [string, number] => [`− ${c.nome}${c.essencial ? ' (essencial)' : ''}`, plano.tetos[c.id] ?? 0]),
+    ...categorias.map((c): [string, number] => [
+      `− ${c.nome}${c.essencial ? ' (essencial)' : ''}`,
+      plano.tetos[c.id] ?? 0,
+    ]),
     ['= Reserva', plano.reserva],
   ]
 
   return (
-    <main className="mx-auto max-w-md p-4">
-      <h1 className="font-display text-title">Plano de {mes} (provisório)</h1>
+    <main className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-[calc(16px+env(safe-area-inset-top))] pb-[calc(112px+env(safe-area-inset-bottom))]">
+      <SeletorDeMes mes={mes} mesAtual={mesAtual} onTrocar={trocarMes} />
+      <h1 className="font-display text-title">Plano de {mesPorExtenso(mes)}</h1>
 
-      <table className="mt-4 w-full tabular-nums">
+      <table className="w-full font-mono text-num tabular-nums">
         <tbody>
           {linhas.map(([rotulo, valor]) => (
             <tr key={rotulo} className="border-b border-line">
-              <td className="py-2">{rotulo}</td>
+              <td className="py-2 font-sans text-body">{rotulo}</td>
               <td className="py-2 text-right">{formatarBRL(valor)}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <ul className="mt-4 space-y-1 text-fg-muted">
-        <li>Situação: {plano.situacao}</li>
+      <ul className="space-y-1 text-small text-fg-muted">
         {plano.mensagens.map((mensagem) => (
           <li key={mensagem}>{mensagem}</li>
         ))}
-        <li>Próximo salário: {proximoSalario(hoje, config.diaUtilSalario)}</li>
-        <li>Gastos anotados este mês: {gastos?.length ?? '…'}</li>
+        <li>A tela Plano completa chega na Etapa 4.</li>
       </ul>
     </main>
   )

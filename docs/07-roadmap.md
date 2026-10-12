@@ -56,12 +56,12 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 
 ## Etapa 3 — Início e anotar gasto
 
-- [ ] Layout com barra de abas inferior e rotas
+- [x] Layout com barra de abas inferior e rotas
 - [x] Tokens de cor (claro e escuro) em `index.css`
-- [ ] `SeletorDeMes`
-- [ ] Tela Início completa (`05-telas-e-fluxos.md`)
-- [ ] `MedidorCategoria`
-- [ ] `FolhaNovoGasto` com todos os campos e o aviso depois de salvar
+- [x] `SeletorDeMes`
+- [x] Tela Início completa (`05-telas-e-fluxos.md`)
+- [x] `MedidorCategoria`
+- [x] `FolhaNovoGasto` com todos os campos e o aviso depois de salvar
 
 **Pausa:** no celular (pelo IP da sua rede com `npm run dev -- --host`), anote três gastos e veja os tetos mudarem.
 

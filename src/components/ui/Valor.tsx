@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { formatarBRL } from '../../domain/dinheiro'
 import type { Centavos } from '../../domain/tipos'
 
@@ -15,9 +15,10 @@ interface ValorProps {
   /** Ao aparecer, os dígitos rolam a partir de zero (entrada do anel). */
   contarAoMontar?: boolean
   className?: string
+  style?: CSSProperties
 }
 
-export default function Valor({ valor, contarAoMontar = false, className = '' }: ValorProps) {
+export default function Valor({ valor, contarAoMontar = false, className = '', style }: ValorProps) {
   const [montado, setMontado] = useState(!contarAoMontar)
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function Valor({ valor, contarAoMontar = false, className = '' }:
   const caracteres = [...numero]
 
   return (
-    <span className={`valor ${className}`}>
+    <span className={`valor ${className}`} style={style}>
       {/* Leitores de tela leem o valor inteiro; as caixas de dígitos ficam escondidas deles. */}
       <span className="sr-only">{texto}</span>
       <span aria-hidden="true" className="valor-sinal">

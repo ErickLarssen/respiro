@@ -23,15 +23,18 @@
   --accent-glow: rgb(14 116 144 / 0.2);
   --on-accent: #ffffff;
 
-  --ok: #0f9f6e;
-  --warn: #b7791f;
-  --danger: #d92d50;
+  --ok: #0b714e;
+  --warn: #875a17;
+  --danger: #b82644;
 
   --c1: #0d9488;
   --c2: #c2410c;
   --c3: #6d28d9;
   --c4: #a16207;
   --c5: #1d6fd8;
+
+  /* Luz branca dos pontos brilhantes (ponta do anel); igual nos dois temas */
+  --luz-pura: #ffffff;
 
   /* Atmosfera do fundo (mais suave no claro) */
   --atmosfera-brilho: 35%;
@@ -538,6 +541,88 @@ body::after {
 }
 
 /* =====================================================================
+   Anel de fôlego (seção 7.4)
+   ===================================================================== */
+@layer components {
+  .anel-arco {
+    transition:
+      stroke-dashoffset 900ms var(--ease-out),
+      stroke var(--d-2) var(--ease-out);
+  }
+  /* A ponta gira em volta do centro do SVG, junto com o arco */
+  .anel-ponta {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+    transition: transform 900ms var(--ease-out);
+  }
+  /* Respiração: inspira em 4s (0% → 40%) e expira em 6s (40% → 100%) */
+  .anel-respira {
+    transform-origin: 50% 50%;
+    animation: respirar 10s var(--ease-in-out) infinite;
+  }
+  .anel-brilho {
+    background: radial-gradient(closest-side, var(--accent-glow), transparent);
+    opacity: 0.35;
+    animation: respirar-brilho 10s var(--ease-in-out) infinite;
+  }
+}
+@keyframes respirar {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.015);
+  }
+}
+@keyframes respirar-brilho {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  40% {
+    opacity: 0.7;
+  }
+}
+
+/* =====================================================================
+   Medidor segmentado (seção 7.5) e etiqueta
+   ===================================================================== */
+@layer components {
+  .medidor-segmento {
+    transition:
+      background-color var(--d-2) var(--ease-out),
+      box-shadow var(--d-2) var(--ease-out);
+  }
+  .medidor-pulso {
+    animation: pulso-segmento 240ms var(--ease-out);
+  }
+  .etiqueta-piscar {
+    animation: piscar 600ms var(--ease-in-out) 1;
+  }
+}
+@keyframes pulso-segmento {
+  50% {
+    transform: scale(1.4);
+  }
+}
+@keyframes piscar {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* Cursor piscando do valor no painel de gasto (seção 7.7) */
+@keyframes cursor-piscando {
+  50% {
+    opacity: 0;
+  }
+}
+.cursor-piscando {
+  animation: cursor-piscando 1s steps(1) infinite;
+}
+
+/* =====================================================================
    Hover só para mouse (seção 8). No celular, o retorno é o :active.
    ===================================================================== */
 @media (hover: hover) and (pointer: fine) {
@@ -573,7 +658,17 @@ body::after {
   .pontos > span {
     animation: none;
   }
-  .valor-coluna {
+  .valor-coluna,
+  .anel-arco,
+  .anel-ponta,
+  .medidor-segmento {
     transition: none;
+  }
+  .anel-respira,
+  .anel-brilho,
+  .medidor-pulso,
+  .etiqueta-piscar,
+  .cursor-piscando {
+    animation: none;
   }
 }

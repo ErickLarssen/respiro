@@ -128,9 +128,11 @@ Todas as cores são variáveis CSS em `src/index.css`, ligadas ao Tailwind v4 co
 
 | Estado | Escuro | Claro | Uso |
 |---|---|---|---|
-| `--ok` | `#3DDC97` | `#0F9F6E` | Categoria abaixo de 80%; reserva |
-| `--warn` | `#F5B54A` | `#B7791F` | Atenção (80% a 100%) |
-| `--danger` | `#FF5C7A` | `#D92D50` | Estourou; déficit |
+| `--ok` | `#3DDC97` | `#0B714E` | Categoria abaixo de 80%; reserva |
+| `--warn` | `#F5B54A` | `#875A17` | Atenção (80% a 100%) |
+| `--danger` | `#FF5C7A` | `#B82644` | Estourou; déficit |
+
+As cores do tema claro foram escurecidas (mesmo tom) depois da medição de contraste. As originais, `#0F9F6E`, `#B7791F` e `#D92D50`, ficavam entre 2,7 e 3,6 sobre o fundo tingido das etiquetas. As novas passam de 4,6 sobre `--bg-1`, `--bg-2` e o fundo da etiqueta (a cor a 14%). No tema escuro, todas já passavam.
 
 ### Cores das categorias (`c1` a `c5`)
 
@@ -257,7 +259,7 @@ A peça mais visível do app.
 - Vidro: `background: var(--glass)`, `backdrop-filter: blur(24px) saturate(160%)` (com `-webkit-`), borda `--line-strong`, brilho superior e sombra flutuante.
 - **Botão "+" separado**, à direita: círculo de 64px com o estilo do botão principal (7.2) e o feixe de luz. Abre o painel de gasto. Fica visível em Início e Gastos; nas outras abas, se recolhe com escala 0.6 e opacidade 0.
 
-**Abas:** quatro, cada uma com ícone (Lucide, traço 1.75, 22px) e rótulo em Michroma 9.5px caixa alta. Aba ativa: ícone e rótulo em `--fg`; inativas em `--fg-faint`.
+**Abas:** quatro, cada uma com ícone (Lucide, traço 1.75, 22px) e rótulo em **Geist 600 10.5px** caixa alta (`letter-spacing: 0.06em`). A primeira versão usava Michroma 9.5px, mas, medido a 360px, cada aba tem 56px e "AJUSTES" em Michroma ocupa 68px; em Geist, 51px. Isso também respeita o tamanho mínimo da Michroma (10px). Aba ativa: ícone e rótulo em `--fg`; inativas em `--fg-faint`.
 
 **Indicador ativo ("lente"):** uma pílula interna de vidro mais claro (`rgb(255 255 255 / 0.06)`, borda `--line-strong`) atrás da aba ativa. Ao trocar de aba, ela **desliza** até a nova posição com `layoutId="lente"` e `molaFirme`. Um ponto de 4px na cor `--accent`, com brilho, fica embaixo do ícone ativo.
 
@@ -374,7 +376,9 @@ Fica no topo da tela Início e responde "quanto ainda posso gastar".
 - **Trilho:** círculo completo em `--line`, com 60 marcações finas (como um mostrador de relógio) em `--fg-faint` a 30% de opacidade.
 - **Arco:** proporção `restante / tetoTotal`, começando no topo, em sentido horário. Traço com gradiente de `--accent` a `--ok`. A ponta do arco tem um ponto brilhante (círculo de 6px com `filter: drop-shadow` na cor do arco).
 - **Cor por estado:** acima de 20% restante, gradiente oxigênio; entre 0% e 20%, `--warn`; negativo, o arco vira um anel completo em `--danger` e o número fica vermelho.
-- **Centro:** rótulo "AINDA POSSO GASTAR" (Michroma 10px), o valor (Michroma 40px, contador da 7.6) e, embaixo, "R$ 17,95/DIA · 21 DIAS" em Geist Mono 12px `--fg-muted`.
+- **Centro:** rótulo "AINDA POSSO GASTAR" (Michroma 10px), o valor (Michroma, contador da 7.6) e, embaixo, "DE R$ 412,09" (o teto total) em Geist Mono 12px `--fg-muted`.
+  - **Tamanho do valor:** até 40px, mas diminui para caber nos ~188px do miolo do anel, porque cada dígito da Michroma ocupa ~0,95em. "R$ 377,09" fica com ~31px; "R$ 1.606,00", com ~26px (`tamanhoDoNumero` em `AnelFolego.tsx`).
+  - **Valor por dia:** a frase completa do `05` ("Cerca de R$ 17,95 por dia até 31/out (21 dias)") fica logo **abaixo** do anel, em vez da versão curta dentro dele. Em conteúdo vale o `05`, e a frase inteira não cabe no miolo.
 - **Respiração:** o brilho atrás do anel (um `radial-gradient` em `--accent-glow`) e o próprio anel fazem um ciclo lento de 10s: **inspira em 4s** (escala 1 → 1.015, brilho 0.35 → 0.7) e **expira em 6s**. Só `transform` e `opacity`. Desligado com movimento reduzido.
 - **Entrada:** o arco se desenha de 0 até o valor em 900ms (`stroke-dashoffset`, `--ease-out`) enquanto o número conta.
 - **Acessibilidade:** o SVG tem `role="img"` e `aria-label="Ainda pode gastar R$ 377,09 de R$ 412,09"`.

@@ -1,5 +1,8 @@
 import { useState, type ReactNode } from 'react'
+import AnelFolego from '../components/ui/AnelFolego'
 import Aviso, { type DadosAviso } from '../components/ui/Aviso'
+import MedidorCategoria from '../components/ui/MedidorCategoria'
+import SeletorDeMes from '../components/ui/SeletorDeMes'
 import Botao from '../components/ui/Botao'
 import Campo from '../components/ui/Campo'
 import Cartao from '../components/ui/Cartao'
@@ -40,6 +43,7 @@ export default function Vitrine() {
   const [chaveContagem, setChaveContagem] = useState(0)
   const [carregando, setCarregando] = useState(false)
   const [aviso, setAviso] = useState<DadosAviso | null>(null)
+  const [mesDemo, setMesDemo] = useState('2026-10')
 
   function mostrarAviso(tom: DadosAviso['tom']) {
     setAviso({
@@ -163,8 +167,36 @@ export default function Vitrine() {
         </div>
       </Secao>
 
+      <Secao titulo="Seletor de mês">
+        <SeletorDeMes mes={mesDemo} mesAtual="2026-10" onTrocar={setMesDemo} />
+      </Secao>
+
+      <Secao titulo="Anel de fôlego">
+        <AnelFolego
+          valor={37709}
+          proporcao={37709 / 41209}
+          rotulo="Ainda posso gastar"
+          detalhe="de R$ 412,09"
+          descricao="Folga: 92% restante"
+        />
+        <AnelFolego valor={6200} proporcao={0.15} rotulo="Ainda posso gastar" detalhe="de R$ 412,09" descricao="Aperto: 15% restante" />
+        <AnelFolego valor={-8791} proporcao={-0.2} rotulo="Ainda posso gastar" detalhe="de R$ 412,09" descricao="Negativo" />
+      </Secao>
+
+      <Secao titulo="Medidores">
+        <div className="divide-y divide-line">
+          <MedidorCategoria nome="Higiene" cor="c1" teto={10000} gasto={0} estado="ok" />
+          <MedidorCategoria nome="Churrasco" cor="c2" teto={18000} gasto={9000} estado="ok" />
+          <MedidorCategoria nome="Lazer" cor="c3" teto={8000} gasto={6800} estado="atencao" />
+          <MedidorCategoria nome="Roupas" cor="c4" teto={5209} gasto={5730} estado="estourou" />
+          <MedidorCategoria nome="Fora do plano" cor="neutra" teto={0} gasto={2000} estado="estourou" mostrarBarras={false} mostrarTeto={false} />
+          <MedidorCategoria nome="Mês futuro (sem barras)" cor="c5" teto={8000} gasto={0} estado="ok" mostrarBarras={false} />
+        </div>
+      </Secao>
+
       <p className="text-small text-fg-faint">
-        Medidor, anel de fôlego, barra de abas, seletor de mês e painel de gasto entram aqui no restante da Etapa 3.
+        A barra de abas e o painel de anotar gasto ficam nas telas de verdade (/): o painel salva no banco, então não
+        entra aqui.
       </p>
 
       <Aviso aviso={aviso} onFechar={() => setAviso(null)} />

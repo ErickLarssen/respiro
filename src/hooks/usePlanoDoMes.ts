@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { listarCategorias, listarContas, obterConfig } from '../data/repositorio'
 import { calcularPlano } from '../domain/plano'
-import type { Categoria, Conta, Mes, Plano } from '../domain/tipos'
+import type { Categoria, Config, Conta, Mes, Plano } from '../domain/tipos'
 
 export interface PlanoDoMes {
   plano: Plano
+  config: Config
   contas: Conta[] // pela ordem
   categorias: Categoria[] // pela ordem; a tela usa para mostrar nome e cor de cada teto
 }
@@ -25,6 +26,6 @@ export function usePlanoDoMes(mes: Mes): PlanoDoMes | null | undefined {
       categorias,
       mes,
     })
-    return { plano, contas, categorias }
+    return { plano, config, contas, categorias }
   }, [mes])
 }
