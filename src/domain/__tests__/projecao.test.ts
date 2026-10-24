@@ -59,3 +59,15 @@ describe('projecao com plano por mês e colchão', () => {
     expect(meses.map((m) => m.reserva)).toEqual([33092 - 12000, 36092 - 12000])
   })
 })
+
+describe('projecao com a fatura do cartão', () => {
+  it('a fatura de cada mês sai da reserva daquele mês', () => {
+    const faturas = { '2026-11': 9000, '2026-12': 30000 }
+    const meses = projecao(config, contas, categorias, '2026-10', 3, { faturas })
+    expect(meses.map((m) => [m.mes, m.fatura, m.reserva])).toEqual([
+      ['2026-10', 0, 5192],
+      ['2026-11', 9000, 34892 - 9000],
+      ['2026-12', 30000, 38092 - 30000],
+    ])
+  })
+})

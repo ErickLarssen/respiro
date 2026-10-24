@@ -9,8 +9,8 @@ import type { PlanoDoMes } from '../../hooks/usePlanoDoMes'
 import PreviaReserva from '../../components/PreviaReserva'
 import { Secao } from './comum'
 
-// Ajustes › Renda: valor, dia útil do salário, reserva mínima, meta do colchão e
-// (opcional) limite do cartão.
+// Ajustes › Renda: valor, dia útil do salário, reserva mínima e meta do colchão.
+// O cartão de crédito tem a sua própria seção (SecaoCartao).
 
 export default function SecaoRenda({ dados }: { dados: PlanoDoMes }) {
   const { config } = dados
@@ -18,7 +18,6 @@ export default function SecaoRenda({ dados }: { dados: PlanoDoMes }) {
   const [renda, setRenda] = useState(valorParaDigitar(config.renda))
   const [dia, setDia] = useState(String(config.diaUtilSalario))
   const [reserva, setReserva] = useState(valorParaDigitar(config.reservaMinima))
-  const [limite, setLimite] = useState(config.limiteCartao !== undefined ? valorParaDigitar(config.limiteCartao) : '')
   const [meta, setMeta] = useState(valorParaDigitar(config.metaColchao ?? 0))
   const [tentouSalvar, setTentouSalvar] = useState(false)
   const [salvando, setSalvando] = useState(false)
@@ -27,36 +26,31 @@ export default function SecaoRenda({ dados }: { dados: PlanoDoMes }) {
   const rendaLida = lerValorDigitado(renda)
   const diaLido = /^\d{1,2}$/.test(dia.trim()) ? Number(dia.trim()) : null
   const reservaLida = lerValorDigitado(reserva)
-  const limiteLido = limite.trim() === '' ? null : lerValorDigitado(limite)
   const metaLida = meta.trim() === '' ? 0 : lerValorDigitado(meta)
   const erros = {
     renda: rendaLida === null || rendaLida <= 0 ? 'Digite uma renda maior que zero.' : null,
     dia: diaLido === null || diaLido < 1 || diaLido > 22 ? 'Digite um dia útil de 1 a 22.' : null,
     reserva: reservaLida === null ? 'Digite a reserva mínima (pode ser 0).' : null,
-    limite: limite.trim() !== '' && limiteLido === null ? 'Digite o limite ou deixe em branco.' : null,
     meta: metaLida === null ? 'Digite a meta do colchão (0 = sem colchão).' : null,
   }
-  const valido = !erros.renda && !erros.dia && !erros.reserva && !erros.limite && !erros.meta
+  const valido = !erros.renda && !erros.dia && !erros.reserva && !erros.meta
 
   const mudou =
     rendaLida !== config.renda ||
     diaLido !== config.diaUtilSalario ||
     reservaLida !== config.reservaMinima ||
-    (limiteLido ?? undefined) !== config.limiteCartao ||
     metaLida !== (config.metaColchao ?? 0)
 
   async function salvar() {
     setTentouSalvar(true)
     if (!valido || rendaLida === null || diaLido === null || reservaLida === null || metaLida === null) return
     setSalvando(true)
-    const { limiteCartao: _limiteAntigo, ...semLimite } = config
     const nova: Config = {
-      ...semLimite,
+      ...config,
       renda: rendaLida,
       diaUtilSalario: diaLido,
       reservaMinima: reservaLida,
       metaColchao: metaLida,
-      ...(limiteLido !== null ? { limiteCartao: limiteLido } : {}),
     }
     await salvarConfig(nova)
     setSalvando(false)
@@ -92,14 +86,6 @@ export default function SecaoRenda({ dados }: { dados: PlanoDoMes }) {
         onChange={(e) => setMeta(e.target.value)}
         erro={mostrar(erros.meta)}
         dica="Dinheiro para não passar o mês duro. Quanto separar por mês você define no Plano; ao chegar na meta, o app para de separar. 0 = sem colchão."
-      />
-      <Campo
-        rotulo="Limite do cartão (R$, opcional)"
-        inputMode="decimal"
-        value={limite}
-        onChange={(e) => setLimite(e.target.value)}
-        erro={mostrar(erros.limite)}
-        dica="Para mostrar em Gastos quanto do limite está livre."
       />
 
       {mudou && valido && rendaLida !== null && reservaLida !== null && metaLida !== null && (

@@ -1,10 +1,13 @@
 import { AnimatePresence, motion, useDragControls, useReducedMotion, type PanInfo } from 'motion/react'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { lerUltimaForma, salvarUltimaForma } from '../../data/preferencias'
-import { lerValorDigitado, valorParaDigitar } from '../../domain/dinheiro'
+import { dataDeVencimento, faturaDaCompra, parcelasDaCompra } from '../../domain/credito'
+import { diaEMes, mesDaData, nomeDoMes } from '../../domain/datas'
+import { formatarBRL, lerValorDigitado, valorParaDigitar } from '../../domain/dinheiro'
 import { FORA_DO_PLANO } from '../../domain/resumo'
 import type { Categoria, DataISO, FormaPagamento, Gasto } from '../../domain/tipos'
 import { anotarGasto, editarGasto, type AvisoDoGasto } from '../../hooks/anotarGasto'
+import type { ResumoCartao } from '../../hooks/usePlanoDoMes'
 import { fadeRapido, molaFirme, molaSuave } from '../../ui/movimento'
 import Botao from './Botao'
 import Campo from './Campo'
@@ -12,6 +15,10 @@ import Segmentado, { type OpcaoSegmentada } from './Segmentado'
 
 // Painel "Anotar gasto" (docs/05-telas-e-fluxos.md e docs/08-design.md, seção 7.7).
 // Sobe de baixo; arrastar para baixo fecha. Também edita um gasto (tela Gastos).
+// No crédito, com cartão cadastrado: mostra a fatura e o limite livre e aceita parcelas
+// (docs/03-regras-de-negocio.md, seção 5).
+
+const MAX_PARCELAS = 12
 
 const ARRASTE_PARA_FECHAR = 120 // px
 const VELOCIDADE_PARA_FECHAR = 600
@@ -32,6 +39,8 @@ interface FolhaNovoGastoProps {
   hoje: DataISO
   /** Com um gasto, o painel abre preenchido para editar. */
   gastoParaEditar?: Gasto | null
+  /** O cartão hoje (null = sem cartão cadastrado). */
+  cartao?: ResumoCartao | null
 }
 
 export default function FolhaNovoGasto({
@@ -41,6 +50,7 @@ export default function FolhaNovoGasto({
   categorias,
   hoje,
   gastoParaEditar = null,
+  cartao = null,
 }: FolhaNovoGastoProps) {
   const reduzirMovimento = useReducedMotion()
   const controlesDeArraste = useDragControls()
@@ -100,6 +110,7 @@ export default function FolhaNovoGasto({
               hoje={hoje}
               onSalvo={onSalvo}
               gastoParaEditar={gastoParaEditar}
+              cartao={cartao}
             />
           </motion.div>
         </div>
@@ -114,7 +125,11 @@ function Formulario({
   hoje,
   onSalvo,
   gastoParaEditar,
-}: Pick<FolhaNovoGastoProps, 'categorias' | 'hoje' | 'onSalvo'> & { gastoParaEditar: Gasto | null }) {
+  cartao,
+}: Pick<FolhaNovoGastoProps, 'categorias' | 'hoje' | 'onSalvo'> & {
+  gastoParaEditar: Gasto | null
+  cartao: ResumoCartao | null
+}) {
   const idTitulo = useId()
   const campoValor = useRef<HTMLInputElement>(null)
   const editando = gastoParaEditar
@@ -123,13 +138,19 @@ function Formulario({
   const [forma, setForma] = useState<FormaPagamento>(() => editando?.forma ?? lerUltimaForma())
   const [descricao, setDescricao] = useState(editando?.descricao ?? '')
   const [data, setData] = useState(editando?.data ?? hoje)
-  const [erro, setErro] = useState<{ valor?: string; categoria?: string; salvar?: string }>({})
+  const [textoParcelas, setTextoParcelas] = useState(String(editando?.parcelas ?? 1))
+  const [erro, setErro] = useState<{ valor?: string; categoria?: string; parcelas?: string; salvar?: string }>({})
   const [salvando, setSalvando] = useState(false)
 
   // Foco automático no valor, para o teclado numérico já abrir.
   useEffect(() => {
     campoValor.current?.focus()
   }, [])
+
+  // No crédito, pela regra da fatura? (sem cartão, ou antes de regraDesde, conta no teto)
+  const naFatura = forma === 'credito' && cartao !== null && !!data && mesDaData(data) >= cartao.cartao.regraDesde
+  const parcelasLidas = /^\d{1,2}$/.test(textoParcelas.trim()) ? Number(textoParcelas.trim()) : null
+  const parcelasValidas = parcelasLidas !== null && parcelasLidas >= 1 && parcelasLidas <= MAX_PARCELAS
 
   async function salvar(e: FormEvent) {
     e.preventDefault()
@@ -138,21 +159,29 @@ function Formulario({
     if (valor === null || valor <= 0) erros.valor = 'Digite um valor maior que zero.'
     if (!categoriaId) erros.categoria = 'Escolha uma categoria.'
     if (!data) erros.salvar = 'Escolha a data do gasto.'
+    if (naFatura && !parcelasValidas) erros.parcelas = `Digite de 1 a ${MAX_PARCELAS} parcelas.`
     setErro(erros)
-    if (valor === null || valor <= 0 || !categoriaId || !data) {
+    if (valor === null || valor <= 0 || !categoriaId || !data || (naFatura && !parcelasValidas)) {
       if (erros.valor) campoValor.current?.focus()
       return
     }
 
     setSalvando(true)
-    const campos = { valor, categoriaId, forma, data, ...(descricao.trim() ? { descricao: descricao.trim() } : {}) }
+    const campos = {
+      valor,
+      categoriaId,
+      forma,
+      data,
+      ...(descricao.trim() ? { descricao: descricao.trim() } : {}),
+      ...(naFatura && parcelasLidas !== null && parcelasLidas > 1 ? { parcelas: parcelasLidas } : {}),
+    }
     try {
       if (editando) {
-        // Monta o gasto de novo, sem a descrição antiga: se ela foi apagada, some mesmo.
-        const { descricao: _descricaoAntiga, ...semDescricao } = editando
-        onSalvo(await editarGasto({ ...semDescricao, ...campos }))
+        // Monta o gasto de novo, sem a descrição e as parcelas antigas: se saíram, somem mesmo.
+        const { descricao: _descricaoAntiga, parcelas: _parcelasAntigas, ...semOpcionais } = editando
+        onSalvo(await editarGasto({ ...semOpcionais, ...campos }))
       } else {
-        const aviso = await anotarGasto(campos)
+        const aviso = await anotarGasto(campos, hoje)
         salvarUltimaForma(forma)
         onSalvo(aviso)
       }
@@ -240,8 +269,29 @@ function Formulario({
         {erro.categoria && <p className="text-small text-danger">{erro.categoria}</p>}
       </fieldset>
 
-      {/* 3. Forma de pagamento */}
-      <Segmentado rotulo="Forma de pagamento" opcoes={FORMAS} valor={forma} onChange={setForma} idLente="lente-forma" />
+      {/* 3. Forma de pagamento (e, no crédito, a fatura e as parcelas) */}
+      <div className="flex flex-col gap-3">
+        <Segmentado rotulo="Forma de pagamento" opcoes={FORMAS} valor={forma} onChange={setForma} idLente="lente-forma" />
+        {forma === 'credito' && (
+          <InfoDoCredito
+            cartao={cartao}
+            data={data}
+            naFatura={naFatura}
+            valor={lerValorDigitado(textoValor)}
+            parcelas={parcelasValidas ? (parcelasLidas ?? 1) : 1}
+          />
+        )}
+        {naFatura && (
+          <Campo
+            rotulo="Parcelas"
+            inputMode="numeric"
+            value={textoParcelas}
+            onChange={(e) => setTextoParcelas(e.target.value)}
+            erro={erro.parcelas}
+            dica="1 = à vista."
+          />
+        )}
+      </div>
 
       {/* 4. Descrição e 5. Data */}
       <Campo rotulo="Descrição" placeholder="Opcional" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
@@ -258,5 +308,50 @@ function Formulario({
         Salvar
       </Botao>
     </form>
+  )
+}
+
+/** A linha de informação do crédito: em qual fatura cai, limite livre e as parcelas. */
+function InfoDoCredito({
+  cartao,
+  data,
+  naFatura,
+  valor,
+  parcelas,
+}: {
+  cartao: ResumoCartao | null
+  data: DataISO
+  naFatura: boolean
+  valor: number | null
+  parcelas: number
+}) {
+  if (!cartao) {
+    return <p className="text-small text-fg-muted">Cadastre o cartão em Ajustes para as compras no crédito irem para a fatura.</p>
+  }
+  if (!naFatura) {
+    return (
+      <p className="text-small text-fg-muted">
+        Compra de antes de {nomeDoMes(cartao.cartao.regraDesde)}: conta no teto da categoria, como antes.
+      </p>
+    )
+  }
+  const fatura = faturaDaCompra(data, cartao.cartao)
+  const divididas =
+    valor !== null && valor > 0 && parcelas > 1
+      ? parcelasDaCompra({ id: '', data, valor, categoriaId: '', forma: 'credito', criadoEm: '', parcelas }, cartao.cartao)
+      : null
+  return (
+    <div className="flex flex-col gap-1 text-small text-fg-muted">
+      <p>
+        Vai na fatura de {nomeDoMes(fatura)} (vence {diaEMes(dataDeVencimento(fatura, cartao.cartao))}) · Limite livre:{' '}
+        <span className={`font-mono ${cartao.limiteLivre < 0 ? 'text-danger' : 'text-fg'}`}>{formatarBRL(cartao.limiteLivre)}</span>
+      </p>
+      {divididas && (
+        <p>
+          {parcelas}x de <span className="font-mono text-fg">{formatarBRL(divididas[0]?.valor ?? 0)}</span>, de{' '}
+          {nomeDoMes(divididas[0]?.fatura ?? fatura)} a {nomeDoMes(divididas.at(-1)?.fatura ?? fatura)}
+        </p>
+      )}
+    </div>
   )
 }

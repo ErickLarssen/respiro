@@ -110,6 +110,22 @@ Pedido depois da primeira semana de uso: os gastos variáveis mudam a cada mês,
 
 ---
 
+## Etapa 5.2 — Cartão de crédito com fatura
+
+Pedido do usuário: dar protagonismo ao cartão (PicPay Card, fecha 12, vence 20, limite R$ 468). Regras em `03-regras-de-negocio.md`, seção 5, aprovadas antes do código (com as quatro decisões: fatura aberta reserva o orçamento, regra nova a partir de novembro, fatura paga no vencimento, contas no crédito continuam contas fixas).
+
+- [x] `Config.cartao` (no lugar de `limiteCartao`), `Gasto.parcelas`, `Plano.fatura`
+- [x] `credito.ts`: fatura de cada compra, parcelas, fatura no plano (real ou estimada), limite livre, aviso + todos os casos da seção 5.8
+- [x] Fatura como conta fixa no `calcularPlano`, no colchão e na projeção
+- [x] Resumo: crédito fora dos tetos, mostrado em `noCredito`
+- [x] Banco versão 3 (limite → cartão) + teste da migração 1 → 2 → 3
+- [x] Backup versão 3 (aceita as versões 1 e 2)
+- [x] Ajustes: seção Cartão de crédito; painel de anotar: fatura, limite e parcelas; Início: cartão da fatura; Gastos: fatura e limite; Plano: linha da fatura
+
+**Pausa:** exporte um backup antes de publicar. Depois, em Ajustes, cadastre o cartão (limite 468, fecha 12, vence 20, orçamento) e use o crédito normalmente por um ciclo de fatura.
+
+---
+
 ## Etapa 6 — Nuvem (opcional)
 
 Só se fizer falta usar em mais de um aparelho. Decidir antes de começar: **Supabase** (banco Postgres + login prontos) ou **backend próprio** (Node + Express + banco, como no Proadesk). Em ambos os casos só `src/data/` muda.

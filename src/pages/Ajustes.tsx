@@ -3,6 +3,7 @@ import { useHoje } from '../hooks/useHoje'
 import { usePlanoDoMes } from '../hooks/usePlanoDoMes'
 import SecaoApagarTudo from './ajustes/SecaoApagarTudo'
 import SecaoBackup from './ajustes/SecaoBackup'
+import SecaoCartao from './ajustes/SecaoCartao'
 import SecaoCategorias from './ajustes/SecaoCategorias'
 import SecaoContas from './ajustes/SecaoContas'
 import SecaoRenda from './ajustes/SecaoRenda'
@@ -24,13 +25,13 @@ export default function Ajustes() {
     config.diaUtilSalario,
     config.reservaMinima,
     config.metaColchao ?? 0,
-    config.limiteCartao ?? '',
   ].join('|')
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-[calc(24px+env(safe-area-inset-top))] pb-[calc(112px+env(safe-area-inset-bottom))] min-[400px]:px-5">
       <h1 className="font-display text-title tracking-[0.02em]">Ajustes</h1>
       <SecaoRenda key={versaoDaConfig} dados={dados} />
+      <SecaoCartao key={JSON.stringify(config.cartao ?? null)} dados={dados} />
       <SecaoContas dados={dados} />
       <SecaoCategorias dados={dados} />
       <SecaoBackup />

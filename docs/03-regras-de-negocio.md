@@ -169,7 +169,8 @@ Se o mês tiver menos de N dias úteis (ex.: fevereiro/2027 tem 18), `diaDoSalar
 gastoPorCategoria(gastos, mes): Record<idCategoria | "fora", number>
 resumoDoMes({ plano, gastos, mes, hoje }): {
   tetoTotal,            // soma dos tetos
-  gastoTotal,           // soma dos gastos do mês, inclusive "fora do plano"
+  gastoTotal,           // soma dos gastos do mês que saem dos tetos, inclusive "fora do plano"
+  gastoNoCredito,       // compras no crédito pela regra da fatura (seção 5.5): não gastam os tetos
   restante,             // tetoTotal − gastoTotal (pode ser negativo)
   porDia,               // só se mes === mês de hoje: max(restante, 0) / dias restantes, em centavos (floor); senão null
   diasRestantes,        // do dia de hoje até o último dia do mês, inclusive; senão null
@@ -178,6 +179,7 @@ resumoDoMes({ plano, gastos, mes, hoje }): {
 ```
 
 - **Estado de cada categoria:** `"ok"` (abaixo de 80% do teto), `"atencao"` (de 80% a 100%), `"estourou"` (acima de 100%). Teto 0 com gasto > 0 é `"estourou"`.
+- Com cartão cadastrado, `resumoDoMes` recebe `cartao`: compras no crédito pela regra da fatura ficam fora dos tetos e aparecem em `noCredito` de cada categoria (seção 5.5).
 - Um gasto cuja categoria foi apagada conta como **"fora do plano"** (id `"fora"`). Se houver gastos fora do plano, eles aparecem numa linha a mais no fim de `categorias`, com teto 0.
 - Se `restante < 0`, mostrar o aviso de "passou do plano". O excesso sai primeiro do colchão e depois da reserva: o texto exato está na seção 8 (`fraseExcessoDoPlano`).
 
@@ -187,31 +189,117 @@ resumoDoMes({ plano, gastos, mes, hoje }): {
 
 ## 5. Cartão de crédito
 
-**Regra: uma compra no crédito conta no mês em que foi feita, não no mês em que a fatura vence.** O usuário anota a compra como qualquer outro gasto (`forma: "credito"`), e ela entra no teto da categoria na hora. Por isso, **a fatura do cartão não é uma conta fixa**: se fosse, a mesma compra seria contada duas vezes (uma ao anotar, outra ao pagar a fatura).
+> **Etapa 5.2:** esta seção foi reescrita a pedido do usuário para dar ao cartão um papel próprio. Ela substitui a regra anterior ("a compra no crédito sai do teto no mês da compra"), que continua valendo só na transição (5.7).
 
-**Exceções:**
-- **Assinaturas e parcelas pagas no cartão** continuam cadastradas como contas fixas (ex.: Claude Pro). A forma de pagamento só muda *quando* o dinheiro sai, não *quanto*.
-- **Transição:** a fatura que vence em outubro/2026 paga compras de setembro, feitas antes de o app existir. Ela entra uma única vez, como parcela com `ultimaParcela: "2026-10"` (ver `dados-iniciais.json`).
+### 5.1 A ideia
 
-**Consequência para o usuário:** o dinheiro de uma compra no crédito continua na conta até o dia 20, mas já está comprometido. O "quanto ainda posso gastar" da tela Início já desconta essa compra, então o saldo do banco não deve ser lido como dinheiro livre.
+O cartão é um **caixa separado**, com orçamento próprio. Uma compra no crédito **não sai do teto da categoria nem da reserva** deste mês: ela entra na **fatura**, e a fatura vira uma **conta fixa automática do mês em que vence**. O dinheiro não some, só muda de mês. Como o salário cai por volta do dia 15 e a fatura vence no dia 20, ela é paga com o salário do mês do vencimento.
 
-**Tela Gastos:** mostrar "No crédito este mês: R$ X (vence no dia 20 do mês que vem)". Se o usuário cadastrar o limite do cartão em Ajustes (opcional, `config.limiteCartao`), mostrar também quanto do limite ainda está livre, descontando as contas fixas pagas no crédito.
+- **Pix, débito e dinheiro** continuam saindo dos tetos, como sempre.
+- **Crédito** sai do **limite** e do **orçamento do cartão**, e aparece nas barras das categorias como informação, sem gastar o teto.
+
+### 5.2 Configuração (Ajustes → Cartão de crédito)
 
 ```ts
-gastoNoCredito(gastos, mes): number          // compras com forma "credito" no mês
-contasNoCredito(contas, mes): number         // contas fixas com pagaNoCredito
-limiteLivre({ limite, gastos, contas, mes }) // limite − gastoNoCredito − contasNoCredito (pode ser negativo)
+config.cartao = {
+  limite: Centavos;        // ex.: 46800 (R$ 468,00); muda quando o banco mudar
+  diaFechamento: number;   // 1 a 28; ex.: 12
+  diaVencimento: number;   // 1 a 28; ex.: 20
+  orcamento: Centavos;     // quanto o usuário quer usar do cartão por mês (≤ limite, recomendado)
+  regraDesde: Mes;         // a partir de qual mês as compras seguem esta regra (transição, 5.7)
+}
 ```
 
-Como o banco calcula, uma **parcela no crédito ocupa todas as parcelas que ainda faltam**, contando a do mês (`valor × parcelasRestantes`). Uma recorrente no crédito ocupa só a cobrança do mês.
+Sem `config.cartao`, o app segue a regra anterior (5.7) para todas as compras no crédito.
 
-**Caso de teste:** limite R$ 5.000,00 em outubro/2026, com R$ 35,00 de compras no crédito, o Claude Pro (R$ 116,00, recorrente) e o notebook (R$ 395,00, faltam 8) no crédito: 500000 − 3500 − 11600 − 8 × 39500 = **168900**.
+### 5.3 Em qual fatura cai cada compra
+
+A fatura é identificada pelo **mês do vencimento**. A fatura de novembro vence em 20/nov e fecha em 12/nov: ela recebe as compras de **13/out a 12/nov**.
+
+- Compra até o dia do fechamento (inclusive) → fatura que vence neste mês.
+- Compra depois do fechamento → fatura que vence no mês seguinte.
+- Se `diaFechamento >= diaVencimento` (ex.: fecha 25, vence 5), o fechamento de uma fatura fica no mês anterior ao do vencimento. A regra continua: a compra cai na primeira fatura cujo fechamento é no dia da compra ou depois dele.
+
+```ts
+faturaDaCompra(data, cartao): Mes   // mês de vencimento
+```
+
+**Parcelado:** `gasto.parcelas = n` (2 a 12, só no crédito). O valor total é dividido em n parcelas com `floor`; os centavos que sobram vão na **primeira** parcela. A parcela 1 cai na fatura da compra; a parcela k, k − 1 meses depois.
+
+### 5.4 A fatura como conta fixa
+
+```ts
+faturaConhecida(gastos, cartao, mes): Centavos                  // soma das parcelas que caem na fatura que vence em mes
+faturaDoPlano(gastos, cartao, mes, hoje): { valor, estimada }   // o que entra no plano de mes
+```
+
+- **Fatura fechada** (hoje depois do dia do fechamento dela): entra o **valor real**.
+- **Fatura aberta ou futura**: entra o **maior** entre o que já se sabe (compras e parcelas que caem nela) e o **orçamento do cartão**, marcada como **estimada**. É uma escolha conservadora, para o plano nunca contar com dinheiro que o cartão vai levar. Quando a fatura fecha abaixo do orçamento, a diferença volta para o plano (normalmente para a reserva).
+
+No plano (`calcularPlano`), a fatura entra junto com as contas fixas, com a mesma prioridade: `sobra = renda − contasFixas − fatura`. Na tela Plano, ela aparece numa linha própria: "− Fatura do cartão (vence 20/nov)", com "(estimada)" quando for o caso.
+
+**Contas fixas pagas no crédito** (ex.: Claude Pro) continuam sendo contas fixas próprias e **não** entram na fatura calculada, senão seriam contadas duas vezes. A tela mostra a fatura completa do banco como informação: "Fatura no banco: R$ X (inclui Claude Pro)".
+
+### 5.5 Tetos, barras e colchão
+
+- Uma compra no crédito **não gasta o teto**: o estado da categoria (ok, atenção, estourou), o "quanto ainda posso gastar" e o valor por dia contam só Pix, débito e dinheiro.
+- Ela **aparece na barra da categoria**, em segmentos de outro estilo depois dos segmentos normais, com o texto "+ R$ 80,00 no crédito".
+- Passar do teto só no crédito **não** usa o colchão: o colchão cobre só o excesso dos gastos que saem dos tetos (seção 8).
+
+### 5.6 Limite e orçamento
+
+```ts
+limiteUsado(gastos, contas, cartao, hoje): Centavos
+limiteLivre = cartao.limite − limiteUsado        // pode ser negativo
+```
+
+- **Limite usado** = todas as parcelas de compras no crédito **feitas até hoje** cujas faturas **ainda não venceram** (vencimento ≥ hoje) + o que as contas fixas no crédito ocupam (regra de `contasNoCredito`, abaixo). Considera-se a fatura paga no dia do vencimento.
+- **Orçamento:** a fatura aberta é comparada com `cartao.orcamento`. A partir de 80%, o aviso fica em atenção; acima de 100%, em estourou (os mesmos estados das categorias).
+
+**Ao anotar no crédito** (painel): mostrar antes de salvar "Vai na fatura de novembro (vence 20/nov) · Limite livre: R$ 312,00". Depois de salvar, um destes avisos:
+- "No crédito: R$ 35,00 na fatura de novembro. Limite livre: R$ 277,00"
+- Fatura acima de 80% do orçamento: "Fatura de novembro: R$ 260,00 de R$ 300,00 do orçamento"
+- Passou do limite: "Passou do limite do cartão em R$ 12,00"
+
+### 5.7 Transição e regra anterior
+
+Até `cartao.regraDesde` (ou para sempre, sem cartão cadastrado), vale a **regra anterior**: a compra no crédito conta no teto do mês em que foi feita, e a fatura não é conta fixa. Ela continua ocupando o limite até a fatura dela vencer.
+
+- **Migração:** quem já usa o app ganha `regraDesde` = **mês seguinte ao da atualização** (atualizando em outubro/2026: `"2026-11"`). As compras no crédito de outubro, que já contaram nos tetos de outubro, não são contadas de novo na fatura de novembro. A tela avisa: "Fatura de novembro: R$ X no plano + R$ Y de compras de outubro (já descontadas em outubro)".
+- **Cadastro novo do cartão:** `regraDesde` = mês seguinte ao do cadastro.
+- A conta "Fatura PicPay Card (compras de setembro)", de `dados-iniciais.json`, continua como está (última parcela em out/26).
+
+```ts
+contaNoTeto(gasto, cartao): boolean   // forma !== "credito" || sem cartão || mês da compra < regraDesde
+```
+
+Regra mantida de antes: uma **conta fixa parcelada no crédito ocupa todas as parcelas que ainda faltam** (`valor × parcelasRestantes`); uma recorrente no crédito ocupa só a cobrança do mês.
+
+### 5.8 Casos de teste
+
+Cartão: limite 46800, fechamento 12, vencimento 20, orçamento 30000, `regraDesde: "2026-11"`.
+
+| Compra | Fatura | Observação |
+|---|---|---|
+| 2026-11-05, R$ 80,00 | `2026-11` | até o fechamento (12/nov) |
+| 2026-11-12, R$ 10,00 | `2026-11` | no dia do fechamento ainda entra |
+| 2026-11-13, R$ 50,00 | `2026-12` | depois do fechamento |
+| 2026-11-20, R$ 100,00 em 3x | dez 3334, jan 3333, fev 3333 | centavo a mais na primeira |
+| 2026-10-28, R$ 40,00 | regra anterior | conta no teto de outubro; ocupa o limite até 20/nov |
+
+- `faturaConhecida(..., "2026-11")` = 9000 (80 + 10; a compra de 28/out é da regra anterior).
+- Plano de novembro com hoje = 2026-11-01 (fatura aberta): fatura no plano = max(9000, 30000) = **30000**, estimada.
+- Plano de novembro com hoje = 2026-11-13 (fatura fechada): fatura no plano = **9000**, real.
+- Fatura de dezembro: 5000 + 3334 = **8334**; no plano, enquanto aberta: max(8334, 30000) = **30000**.
+- Limite usado em 2026-11-21 (fatura de novembro já vencida): 5000 + 3334 + 3333 + 3333 = **15000** → limite livre **31800**.
+- Limite usado em 2026-11-15: 4000 (out, regra anterior) + 9000 (fatura de novembro) + 5000 (compra de 13/nov) = **18000** → livre **28800**. A compra parcelada de 20/nov ainda não existe.
+- Novembro, gastos: Churrasco R$ 120,00 no Pix e R$ 80,00 no crédito, teto 18000 → a categoria conta 12000 no teto (estado ok, restam R$ 60,00) e mostra "+ R$ 80,00 no crédito".
 
 ---
 
 ## 6. Projeção (tela Plano)
 
-`projecao(config, contas, categorias, mesInicial, meses = 12, { planejados, gastosPorMes })` → para cada mês: `{ mes, contasFixas, reserva, acumulado, colchao, saldoColchao }`, usando o plano de cada mês (seção 7) e o colchão (seção 8). O colchão é simulado desde o mês de início do app, porque o saldo depende dos meses anteriores.
+`projecao(config, contas, categorias, mesInicial, meses = 12, { planejados, gastosPorMes, faturas })` → para cada mês: `{ mes, contasFixas, fatura, reserva, acumulado, colchao, saldoColchao }`, usando o plano de cada mês (seção 7), o colchão (seção 8) e a fatura do cartão de cada mês (seção 5.4: real se fechada, estimada se aberta). O colchão é simulado desde o mês de início do app, porque o saldo depende dos meses anteriores.
 
 **Caso de teste:** a partir de `2026-10`, sem planos salvos nem colchão, o acumulado após 12 meses (outubro/2026 a setembro/2027) é **593404**.
 
@@ -246,12 +334,12 @@ Dinheiro separado todo mês, além da reserva de emergência, para cobrir os mes
 - **Meta** (`config.metaColchao`, em Ajustes): ao chegar nela, o app para de separar, e o dinheiro volta para a reserva. Meta 0 = sem colchão.
   `aSepararNoColchao(valorDoMes, meta, saldo) = max(0, min(valorDoMes, meta − saldo))`
 - **Prioridade:** depois dos essenciais e antes da reserva mínima (seção 2).
-- **Uso automático:** se os gastos do mês passarem da soma dos tetos, o excesso **sai primeiro do colchão**. Só o que passar do saldo sai da reserva.
+- **Uso automático:** se os gastos do mês passarem da soma dos tetos, o excesso **sai primeiro do colchão**. Só o que passar do saldo sai da reserva. Compras no crédito pela regra da fatura não entram nessa conta (seção 5.5).
 
 ```
 para cada mês, do início do app até o mês pedido:
     separado   = colchão do plano (calcularPlano, com aSepararNoColchao)
-    excesso    = max(gastos do mês − soma dos tetos, 0)
+    excesso    = max(gastos do mês que saem dos tetos − soma dos tetos, 0)
     usado      = min(excesso, saldoInicial + separado)
     saldoFinal = saldoInicial + separado − usado      // vira o saldoInicial do mês seguinte
 ```
@@ -265,6 +353,8 @@ fraseExcessoDoPlano(excesso, colchao): string
 - Sem colchão: "Você passou do plano em R$ X. Isso sai da reserva deste mês."
 - Colchão cobre tudo: "Você passou do plano em R$ X. Isso sai do colchão, que fica com R$ Y."
 - Colchão cobre uma parte: "Você passou do plano em R$ X: R$ A saem do colchão e R$ B da reserva deste mês."
+
+**Corte pequeno:** se o corte dos flexíveis arredonda para 0%, a mensagem diz "em menos de 1%" (e não "em 0%", que pareceria que nada mudou).
 
 **Casos de teste** (plano de out/26 sem colchão; de nov/26 em diante, colchão de 5000 por mês):
 

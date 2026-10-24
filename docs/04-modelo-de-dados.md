@@ -7,12 +7,21 @@ export type Mes = string;      // "AAAA-MM"
 export type DataISO = string;  // "AAAA-MM-DD"
 export type Centavos = number; // sempre inteiro
 
+// Cartão de crédito (03-regras-de-negocio, seção 5). Substitui o antigo limiteCartao.
+export interface Cartao {
+  limite: Centavos;
+  diaFechamento: number;      // 1 a 28
+  diaVencimento: number;      // 1 a 28
+  orcamento: Centavos;        // quanto usar do cartão por mês
+  regraDesde: Mes;            // compras a partir deste mês seguem a regra da fatura
+}
+
 export interface Config {
   id: "principal";             // só existe uma
   renda: Centavos;
   diaUtilSalario: number;      // 1 a 22
   reservaMinima: Centavos;
-  limiteCartao?: Centavos;    // opcional, só para mostrar o limite livre
+  cartao?: Cartao;            // sem cartão, compras no crédito contam no teto (regra anterior)
   metaColchao?: Centavos;     // ao chegar nesse saldo, o colchão para de crescer; 0 ou ausente = sem colchão
   criadoEm: DataISO;          // o mês desta data é o início do histórico do colchão
 }
@@ -47,6 +56,7 @@ export interface Gasto {
   categoriaId: string;
   descricao?: string;
   forma: FormaPagamento;
+  parcelas?: number;           // só no crédito: 2 a 12 (ausente = à vista)
   criadoEm: string;            // ISO completo, para desempate na ordenação
 }
 
@@ -62,6 +72,7 @@ export interface Plano {
   mes: Mes;
   renda: Centavos;
   contasFixas: Centavos;
+  fatura: Centavos;                  // fatura do cartão que vence neste mês (entra como conta fixa)
   sobra: Centavos;
   tetos: Record<string, Centavos>;
   colchao: Centavos;                 // quanto vai de fato para o colchão neste mês
@@ -83,6 +94,9 @@ db.version(1).stores({
   gastos:     "id, data, categoriaId",   // índice em data para filtrar o mês
 });
 
+// Versão 3: sem tabela nova; migra config.limiteCartao para config.cartao (abaixo)
+db.version(3).stores({}).upgrade(/* migração do cartão */);
+
 // Versão 2: plano de cada mês
 db.version(2).stores({ planosDoMes: "mes" }).upgrade(/* migração, abaixo */);
 ```
@@ -100,8 +114,10 @@ Se a tabela `config` estiver vazia ao abrir o app, mostrar uma tela com duas op�
 ## Backup
 
 Como os dados só existem no aparelho, apagar os dados do navegador apaga tudo. A tela Ajustes tem:
-- **Exportar backup**: gera `respiro-backup-AAAA-MM-DD.json` com `{ versao: 2, config, contas, categorias, gastos, planosDoMes }`.
-- **Backups da versão 1** (anteriores ao plano por mês) continuam aceitos: na importação, ganham o plano do primeiro mês, como na migração do banco.
+- **Exportar backup**: gera `respiro-backup-AAAA-MM-DD.json` com `{ versao: 3, config, contas, categorias, gastos, planosDoMes }`.
+- **Backups antigos** continuam aceitos: os da versão 1 ganham o plano do primeiro mês; os das versões 1 e 2 com `limiteCartao` ganham o cartão (como na migração do banco).
+
+**Migração da versão 2 para a 3:** se a config tem o antigo `limiteCartao`, ele vira `config.cartao` com fechamento 12, vencimento 20, orçamento igual ao limite (para o usuário ajustar) e `regraDesde` = mês seguinte ao da atualização. A conversão fica em `src/data/migracoes.ts`, usada pelo banco e pelo backup.
 - **Importar backup**: lê o arquivo, valida a `versao` e os campos obrigatórios, mostra um resumo ("12 contas, 4 categorias, 87 gastos") e só substitui depois de o usuário confirmar.
 
 ## Armazenamento persistente

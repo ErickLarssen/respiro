@@ -54,7 +54,8 @@ respiro/
     │   ├── feriados.ts           ← Páscoa, feriados nacionais, Carnaval
     │   ├── salario.ts            ← diaDoSalario (N-ésimo dia útil), proximoSalario
     │   ├── contas.ts             ← contaAtivaNoMes, totalContasFixas, parcelasRestantes, fimDasParcelas
-    │   ├── credito.ts            ← gastoNoCredito, limiteLivre
+    │   ├── credito.ts            ← cartão: em qual fatura cai a compra, fatura no plano, limite livre
+    │   ├── estado.ts             ← ok / atenção / estourou (categorias e orçamento do cartão)
     │   ├── plano.ts              ← calcularPlano (o coração do app), fraseEfeitoNaReserva
     │   ├── planejamento.ts       ← plano de cada mês: o mês sem plano copia o último planejado
     │   ├── colchao.ts            ← colchão: separar até a meta, cobrir o excesso, simularMeses
@@ -66,18 +67,19 @@ respiro/
     │   ├── repositorio.ts        ← salvarConfig, adicionarGasto, apagarGasto...
     │   ├── backup.ts             ← exportar/importar JSON
     │   ├── dadosIniciais.ts      ← importa docs/dados-iniciais.json (sem copiar) para o primeiro uso
+    │   ├── migracoes.ts          ← conversões de dados antigos (limite → cartão), usadas pelo banco e pelo backup
+    │   ├── relogio.ts            ← a data de hoje no aparelho (para migrações e para useHoje)
     │   ├── preferencias.ts       ← última forma de pagamento (localStorage)
     │   └── __tests__/            ← testes do repositório com fake-indexeddb
     ├── hooks/
     │   ├── useConfig.ts
     │   ├── useGastosDoMes.ts
     │   ├── usePlanoDoMes.ts
-    │   ├── carregarPlanoDoMes.ts ← banco + domínio de um mês (plano salvo, colchão, histórico)
-    │   ├── useCategorias.ts
+    │   ├── carregarPlanoDoMes.ts ← banco + domínio de um mês (plano salvo, colchão, fatura, resumo do cartão)
     │   ├── useMesSelecionado.ts  ← mês aberto na tela, guardado na URL (?mes=AAAA-MM)
     │   ├── anotarGasto.ts        ← salva/edita o gasto e decide o aviso (banco + domínio)
     │   ├── useLayout.ts          ← o que o layout oferece às telas: abrir o painel, mostrar aviso
-    │   └── useHoje.ts            ← único lugar que lê o relógio; o domínio recebe "hoje" por parâmetro
+    │   └── useHoje.ts            ← a data de hoje para as telas (via data/relogio.ts); o domínio recebe "hoje" por parâmetro
     ├── ui/                       ← apoio do design system (docs/08-design.md)
     │   ├── movimento.ts          ← molas do Motion (molaFirme, molaSuave)
     │   ├── useSpotlight.ts       ← brilho que segue o cursor/dedo
@@ -94,6 +96,7 @@ respiro/
     │       ├── MedidorCategoria.tsx  ← medidor segmentado de um teto
     │       ├── Segmentado.tsx    ← opções lado a lado com a lente deslizante
     │       ├── CartaoColchao.tsx ← saldo e meta do colchão (Início)
+    │       ├── CartaoCredito.tsx ← fatura aberta, orçamento e limite livre (Início)
     │       ├── GraficoProjecao.tsx ← barras da reserva nos próximos 12 meses
     │       └── FolhaNovoGasto.tsx    ← painel que sobe de baixo para anotar ou editar gasto
     └── pages/
@@ -103,6 +106,6 @@ respiro/
         ├── Gastos.tsx
         ├── Plano.tsx
         ├── Ajustes.tsx
-        ├── ajustes/              ← uma seção por arquivo: Renda, Contas, Categorias, Backup, Apagar tudo
+        ├── ajustes/              ← uma seção por arquivo: Renda, Cartão, Contas, Categorias, Backup, Apagar tudo
         └── plano/EditorDoMes.tsx ← "Ajustar o plano do mês"
 ```

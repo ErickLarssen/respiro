@@ -5,6 +5,8 @@ import Etiqueta, { type EstadoEtiqueta } from './Etiqueta'
 
 // Medidor segmentado (docs/08-design.md, seção 7.5): 20 segmentos, como um painel
 // de instrumentos. Cheios na cor da categoria; em atenção, --warn; estourou, todos --danger.
+// Compras no crédito (regra da fatura) aparecem depois, em tom claro da cor da categoria:
+// mostram o gasto, mas não gastam o teto (docs/03-regras-de-negocio.md, seção 5.5).
 
 const SEGMENTOS = 20
 const DESCRITO: Record<EstadoEtiqueta, string> = { ok: 'ok', atencao: 'atenção', estourou: 'estourou' }
@@ -21,6 +23,8 @@ interface MedidorCategoriaProps {
   mostrarBarras?: boolean
   /** false na linha "fora do plano", que não tem teto. */
   mostrarTeto?: boolean
+  /** Compras no crédito pela regra da fatura: aparecem, mas não gastam o teto. */
+  noCredito?: Centavos
 }
 
 function segmentosCheios(teto: Centavos, gasto: Centavos, estado: EstadoEtiqueta): number {
@@ -38,8 +42,12 @@ export default function MedidorCategoria({
   estado,
   mostrarBarras = true,
   mostrarTeto = true,
+  noCredito = 0,
 }: MedidorCategoriaProps) {
   const cheios = segmentosCheios(teto, gasto, estado)
+  // Segmentos do crédito: proporcionais ao teto, no espaço que sobrar depois dos cheios
+  const doCredito =
+    noCredito > 0 ? Math.min(SEGMENTOS - cheios, teto > 0 ? Math.ceil((noCredito * SEGMENTOS) / teto) : SEGMENTOS) : 0
   const corDaCategoria = `var(--${cor === 'neutra' ? 'fg-muted' : cor})`
   const corCheia = estado === 'estourou' ? 'var(--danger)' : estado === 'atencao' ? 'var(--warn)' : corDaCategoria
 
@@ -60,7 +68,9 @@ export default function MedidorCategoria({
   }
 
   const restante = teto - gasto
-  const textoValor = `${formatarBRL(gasto)} de ${formatarBRL(teto)}`
+  const textoValor = `${formatarBRL(gasto)} de ${formatarBRL(teto)}${
+    noCredito > 0 ? `, mais ${formatarBRL(noCredito)} no crédito` : ''
+  }`
 
   return (
     <div className="flex flex-col gap-2 py-3">
@@ -96,6 +106,7 @@ export default function MedidorCategoria({
         >
           {Array.from({ length: SEGMENTOS }, (_, i) => {
             const cheio = aceso && i < cheios
+            const credito = aceso && !cheio && i < cheios + doCredito
             const ultimo = cheio && i === cheios - 1
             const pulsa = i >= pulso.de && i < pulso.ate
             return (
@@ -103,7 +114,11 @@ export default function MedidorCategoria({
                 key={pulsa ? `${i}-${pulso.vez}` : i}
                 className={`medidor-segmento h-1.5 flex-1 rounded-[2px] ${pulsa ? 'medidor-pulso' : ''}`}
                 style={{
-                  background: cheio ? corCheia : 'var(--line)',
+                  background: cheio
+                    ? corCheia
+                    : credito
+                      ? `color-mix(in srgb, ${corDaCategoria} 35%, transparent)`
+                      : 'var(--line)',
                   boxShadow: ultimo ? `0 0 8px ${corCheia}` : undefined,
                   transitionDelay: `${i * 18}ms`,
                 }}
@@ -121,6 +136,7 @@ export default function MedidorCategoria({
               : restante >= 0
                 ? `Restam ${formatarBRL(restante)}`
                 : `Passou ${formatarBRL(-restante)} do teto`}
+            {noCredito > 0 && <span className="text-fg"> · + {formatarBRL(noCredito)} no crédito</span>}
           </span>
           {/* key: a etiqueta remonta quando o estado muda, e "ESTOUROU" pisca uma vez */}
           <Etiqueta key={estado} estado={estado} />

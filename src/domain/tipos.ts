@@ -4,12 +4,21 @@ export type Mes = string // "AAAA-MM"
 export type DataISO = string // "AAAA-MM-DD"
 export type Centavos = number // sempre inteiro
 
+/** Cartão de crédito (docs/03-regras-de-negocio.md, seção 5). */
+export interface Cartao {
+  limite: Centavos // muda quando o banco mudar
+  diaFechamento: number // 1 a 28
+  diaVencimento: number // 1 a 28
+  orcamento: Centavos // quanto o usuário quer usar do cartão por mês
+  regraDesde: Mes // compras a partir deste mês seguem a regra da fatura (antes: regra anterior)
+}
+
 export interface Config {
   id: 'principal' // só existe uma
   renda: Centavos
   diaUtilSalario: number // 1 a 22
   reservaMinima: Centavos
-  limiteCartao?: Centavos // opcional, só para mostrar o limite livre
+  cartao?: Cartao // sem cartão, compras no crédito seguem a regra anterior (contam no teto)
   metaColchao?: Centavos // ao chegar nesse saldo, o colchão para de crescer; 0 ou ausente = sem colchão
   criadoEm: DataISO
 }
@@ -44,6 +53,7 @@ export interface Gasto {
   categoriaId: string
   descricao?: string
   forma: FormaPagamento
+  parcelas?: number // só no crédito: em quantas vezes (2 a 12); ausente = à vista
   criadoEm: string // ISO completo, para desempate na ordenação
 }
 
@@ -64,7 +74,8 @@ export interface Plano {
   mes: Mes
   renda: Centavos
   contasFixas: Centavos
-  sobra: Centavos
+  fatura: Centavos // fatura do cartão que vence neste mês (entra como conta fixa)
+  sobra: Centavos // renda − contasFixas − fatura
   tetos: Record<string, Centavos>
   colchao: Centavos // quanto vai de fato para o colchão neste mês
   reserva: Centavos

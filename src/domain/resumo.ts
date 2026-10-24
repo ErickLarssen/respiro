@@ -1,28 +1,31 @@
+import { contaNoTeto } from './credito'
 import { diaDaData, diasNoMes, mesDaData } from './datas'
-import type { Centavos, DataISO, Gasto, Mes, Plano } from './tipos'
+import { estadoDaCategoria, type EstadoCategoria } from './estado'
+import type { Cartao, Centavos, DataISO, Gasto, Mes, Plano } from './tipos'
 
 // Resumo do mês para a tela Início. Regras: docs/03-regras-de-negocio.md, seção 4.
+// Com cartão cadastrado, compras no crédito pela regra da fatura (seção 5.5) não gastam
+// o teto: aparecem à parte, em `noCredito`.
+
+export { estadoDaCategoria, type EstadoCategoria } from './estado'
 
 /** Id usado para gastos fora do plano (escolhidos assim ou de categoria apagada). */
 export const FORA_DO_PLANO = 'fora'
 
-/** A partir de 80% do teto, a categoria entra em "atenção". Em %, para comparar só inteiros. */
-const LIMITE_ATENCAO = 80
-
-export type EstadoCategoria = 'ok' | 'atencao' | 'estourou'
-
 export interface ResumoCategoria {
   id: string
   teto: Centavos
-  gasto: Centavos
+  gasto: Centavos // o que gasta o teto
   restante: Centavos // pode ser negativo
   estado: EstadoCategoria
+  noCredito: Centavos // compras no crédito pela regra da fatura (não gastam o teto)
 }
 
 export interface ResumoDoMes {
   tetoTotal: Centavos
-  gastoTotal: Centavos // inclusive "fora do plano"
-  restante: Centavos // pode ser negativo
+  gastoTotal: Centavos // o que gasta os tetos, inclusive "fora do plano"
+  gastoNoCredito: Centavos // compras no crédito pela regra da fatura
+  restante: Centavos // tetoTotal − gastoTotal; pode ser negativo
   porDia: Centavos | null // só no mês de hoje
   diasRestantes: number | null // só no mês de hoje; conta hoje
   categorias: ResumoCategoria[] // na ordem do plano; "fora" no fim, se houver
@@ -38,14 +41,14 @@ export function gastoPorCategoria(gastos: Gasto[], mes: Mes): Record<string, Cen
   return soma
 }
 
-export function estadoDaCategoria(teto: Centavos, gasto: Centavos): EstadoCategoria {
-  if (gasto > teto) return 'estourou'
-  if (teto > 0 && gasto * 100 >= teto * LIMITE_ATENCAO) return 'atencao'
-  return 'ok'
+function resumirCategoria(id: string, teto: Centavos, gasto: Centavos, noCredito: Centavos): ResumoCategoria {
+  return { id, teto, gasto, restante: teto - gasto, estado: estadoDaCategoria(teto, gasto), noCredito }
 }
 
-function resumirCategoria(id: string, teto: Centavos, gasto: Centavos): ResumoCategoria {
-  return { id, teto, gasto, restante: teto - gasto, estado: estadoDaCategoria(teto, gasto) }
+function somar(valores: Record<string, Centavos>, filtro: (id: string) => boolean = () => true): Centavos {
+  return Object.entries(valores)
+    .filter(([id]) => filtro(id))
+    .reduce((soma, [, valor]) => soma + valor, 0)
 }
 
 export function resumoDoMes(entrada: {
@@ -53,22 +56,30 @@ export function resumoDoMes(entrada: {
   gastos: Gasto[]
   mes: Mes
   hoje: DataISO
+  cartao?: Cartao
 }): ResumoDoMes {
-  const { plano, gastos, mes, hoje } = entrada
-  const porCategoria = gastoPorCategoria(gastos, mes)
+  const { plano, gastos, mes, hoje, cartao } = entrada
+  const doTeto = gastoPorCategoria(
+    gastos.filter((gasto) => contaNoTeto(gasto, cartao)),
+    mes,
+  )
+  const doCredito = gastoPorCategoria(
+    gastos.filter((gasto) => !contaNoTeto(gasto, cartao)),
+    mes,
+  )
 
   const categorias = Object.entries(plano.tetos).map(([id, teto]) =>
-    resumirCategoria(id, teto, porCategoria[id] ?? 0),
+    resumirCategoria(id, teto, doTeto[id] ?? 0, doCredito[id] ?? 0),
   )
 
   // Tudo que não é de uma categoria do plano (inclusive categoria apagada) é "fora do plano".
-  const fora = Object.entries(porCategoria)
-    .filter(([id]) => !Object.hasOwn(plano.tetos, id))
-    .reduce((soma, [, valor]) => soma + valor, 0)
-  if (fora > 0) categorias.push(resumirCategoria(FORA_DO_PLANO, 0, fora))
+  const ehFora = (id: string) => !Object.hasOwn(plano.tetos, id)
+  const fora = somar(doTeto, ehFora)
+  const foraNoCredito = somar(doCredito, ehFora)
+  if (fora > 0 || foraNoCredito > 0) categorias.push(resumirCategoria(FORA_DO_PLANO, 0, fora, foraNoCredito))
 
   const tetoTotal = Object.values(plano.tetos).reduce((soma, teto) => soma + teto, 0)
-  const gastoTotal = Object.values(porCategoria).reduce((soma, valor) => soma + valor, 0)
+  const gastoTotal = somar(doTeto)
   const restante = tetoTotal - gastoTotal
 
   let porDia: Centavos | null = null
@@ -78,5 +89,5 @@ export function resumoDoMes(entrada: {
     porDia = Math.floor(Math.max(restante, 0) / diasRestantes)
   }
 
-  return { tetoTotal, gastoTotal, restante, porDia, diasRestantes, categorias }
+  return { tetoTotal, gastoTotal, gastoNoCredito: somar(doCredito), restante, porDia, diasRestantes, categorias }
 }

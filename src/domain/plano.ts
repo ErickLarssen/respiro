@@ -18,6 +18,8 @@ export interface EntradaPlano {
   desejos?: Record<string, Centavos>
   /** Quanto separar no colchão neste mês (já limitado pela meta). Sem isto, 0. */
   colchao?: Centavos
+  /** Fatura do cartão que vence neste mês (seção 5.4). Entra como conta fixa. Sem isto, 0. */
+  fatura?: Centavos
 }
 
 interface Reparticao {
@@ -50,18 +52,20 @@ function repartir(categorias: Categoria[], disponivel: Centavos): Reparticao {
   return { tetos, total, desejado, cortou }
 }
 
-function planoDeDeficit(entrada: EntradaPlano, contasFixas: Centavos, sobra: Centavos): Plano {
+function planoDeDeficit(entrada: EntradaPlano, contasFixas: Centavos, fatura: Centavos, sobra: Centavos): Plano {
   const tetos = Object.fromEntries(entrada.categorias.map((categoria) => [categoria.id, 0]))
+  const oQue = fatura > 0 ? 'As contas fixas e a fatura do cartão passam' : 'As contas fixas passam'
   return {
     mes: entrada.mes,
     renda: entrada.renda,
     contasFixas,
+    fatura,
     sobra,
     tetos,
     colchao: 0,
     reserva: 0,
     situacao: 'deficit',
-    mensagens: [`As contas fixas passam da renda em ${formatarBRL(-sobra)}.`],
+    mensagens: [`${oQue} da renda em ${formatarBRL(-sobra)}.`],
   }
 }
 
@@ -86,9 +90,11 @@ export function calcularPlano(entrada: EntradaPlano): Plano {
     desejo: entrada.desejos?.[categoria.id] ?? categoria.desejo,
   }))
   const contasFixas = totalContasFixas(entrada.contas, mes)
-  const sobra = renda - contasFixas
+  const fatura = entrada.fatura ?? 0
+  // A fatura do cartão sai junto com as contas fixas, antes de tudo
+  const sobra = renda - contasFixas - fatura
 
-  if (sobra < 0) return planoDeDeficit(entrada, contasFixas, sobra)
+  if (sobra < 0) return planoDeDeficit(entrada, contasFixas, fatura, sobra)
 
   let disponivel = sobra
 
@@ -122,16 +128,19 @@ export function calcularPlano(entrada: EntradaPlano): Plano {
   if (essenciais.cortou || colchaoCortado || reservaMinimaCortada) {
     situacao = 'critico'
     const protegidos = colchaoDesejado > 0 ? 'os essenciais, o colchão e a reserva' : 'os essenciais e a reserva'
-    mensagem = `Depois das contas fixas sobram só ${formatarBRL(sobra)}. Não dá para cobrir ${protegidos}.`
+    const depoisDe = fatura > 0 ? 'das contas fixas e da fatura' : 'das contas fixas'
+    mensagem = `Depois ${depoisDe} sobram só ${formatarBRL(sobra)}. Não dá para cobrir ${protegidos}.`
   } else if (flexiveis.cortou) {
     situacao = 'apertado'
     const corte = flexiveis.desejado - flexiveis.total
     const percentual = Math.round((corte * 100) / flexiveis.desejado)
+    // Corte pequeno demais para aparecer como inteiro: "0%" pareceria que nada mudou
+    const quanto = percentual === 0 ? 'menos de 1%' : `${percentual}%`
     const objetivo =
       colchao > 0
         ? `separar ${formatarBRL(colchao)} no colchão e guardar ${formatarBRL(reservaMinima)}`
         : `guardar ${formatarBRL(reservaMinima)}`
-    mensagem = `Para ${objetivo}, reduzi os gastos flexíveis em ${percentual}%.`
+    mensagem = `Para ${objetivo}, reduzi os gastos flexíveis em ${quanto}.`
   } else if (reserva > reservaMinima) {
     situacao = 'folga'
     mensagem = `Seus planos couberam. Os ${formatarBRL(reserva - reservaMinima)} que sobraram vão para a reserva.`
@@ -144,6 +153,7 @@ export function calcularPlano(entrada: EntradaPlano): Plano {
     mes,
     renda,
     contasFixas,
+    fatura,
     sobra,
     // Na mesma ordem das categorias recebidas.
     tetos: Object.fromEntries(

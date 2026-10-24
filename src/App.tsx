@@ -4,12 +4,13 @@ import Aviso, { type DadosAviso } from './components/ui/Aviso'
 import BarraDeAbas from './components/ui/BarraDeAbas'
 import FolhaNovoGasto from './components/ui/FolhaNovoGasto'
 import { pedirArmazenamentoPersistente } from './data/armazenamento'
+import { mesDaData } from './domain/datas'
 import type { Gasto } from './domain/tipos'
 import type { AvisoDoGasto } from './hooks/anotarGasto'
 import type { ContextoDoLayout } from './hooks/useLayout'
-import { useCategorias } from './hooks/useCategorias'
 import { useConfig } from './hooks/useConfig'
 import { useHoje } from './hooks/useHoje'
+import { usePlanoDoMes } from './hooks/usePlanoDoMes'
 import Ajustes from './pages/Ajustes'
 import Inicio from './pages/Inicio'
 import Gastos from './pages/Gastos'
@@ -32,7 +33,8 @@ function ExigeConfig() {
 function Layout() {
   const hoje = useHoje()
   const { pathname } = useLocation()
-  const categorias = useCategorias()
+  // Categorias e cartão de hoje, para o painel de anotar gasto
+  const doMesAtual = usePlanoDoMes(mesDaData(hoje))
   const [folhaAberta, setFolhaAberta] = useState(false)
   const [gastoParaEditar, setGastoParaEditar] = useState<Gasto | null>(null)
   const [aviso, setAviso] = useState<DadosAviso | null>(null)
@@ -68,9 +70,10 @@ function Layout() {
         aberta={folhaAberta}
         onFechar={() => setFolhaAberta(false)}
         onSalvo={aoSalvar}
-        categorias={categorias ?? []}
+        categorias={doMesAtual?.categorias ?? []}
         hoje={hoje}
         gastoParaEditar={gastoParaEditar}
+        cartao={doMesAtual?.cartao ?? null}
       />
       <Aviso aviso={aviso} onFechar={() => setAviso(null)} />
     </>

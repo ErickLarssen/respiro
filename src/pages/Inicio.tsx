@@ -1,6 +1,7 @@
 import AnelFolego from '../components/ui/AnelFolego'
 import Cartao from '../components/ui/Cartao'
 import CartaoColchao from '../components/ui/CartaoColchao'
+import CartaoCredito from '../components/ui/CartaoCredito'
 import MedidorCategoria from '../components/ui/MedidorCategoria'
 import SeletorDeMes from '../components/ui/SeletorDeMes'
 import Valor from '../components/ui/Valor'
@@ -46,9 +47,10 @@ export default function Inicio() {
 
   if (!dados || !gastos) return null // carregando (é rápido: o banco está no aparelho)
 
-  const { plano, config, categorias, colchao, excesso } = dados
+  const { plano, config, categorias, colchao, excesso, cartao } = dados
   const metaColchao = config.metaColchao ?? 0
-  const resumo = resumoDoMes({ plano, gastos, mes, hoje })
+  // Com cartão, compras no crédito (regra da fatura) não gastam os tetos
+  const resumo = resumoDoMes({ plano, gastos, mes, hoje, cartao: config.cartao })
   const momento = mes === mesAtual ? 'atual' : mes < mesAtual ? 'passado' : 'futuro'
   const nomeDoMesAberto = nomeDoMes(mes)
 
@@ -128,6 +130,8 @@ export default function Inicio() {
         </Cartao>
       </section>
 
+      {cartao && momento === 'atual' && <CartaoCredito resumo={cartao} />}
+
       {metaColchao > 0 && (
         <CartaoColchao
           saldo={colchao.saldoFinal}
@@ -166,6 +170,7 @@ export default function Inicio() {
                     estado={linha.estado}
                     mostrarBarras={momento !== 'futuro' && !ehFora}
                     mostrarTeto={!ehFora}
+                    noCredito={linha.noCredito}
                   />
                 </li>
               )

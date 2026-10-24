@@ -234,3 +234,12 @@ describe('colchão', () => {
     expect(calcularPlano({ ...entrada('2026-10', 100000), colchao: 5000 }).colchao).toBe(0)
   })
 })
+
+describe('mensagem de corte pequeno', () => {
+  it('corte abaixo de 0,5% aparece como "menos de 1%", não "0%"', () => {
+    // Sobra 46101 − 10000 − 5000 = 31101 para flexíveis que querem 31209: corte de 0,35%
+    const plano = calcularPlano({ ...entrada('2026-11'), fatura: 30000 })
+    expect(plano.situacao).toBe('apertado')
+    expect(plano.mensagens).toEqual([`Para guardar ${R$}50,00, reduzi os gastos flexíveis em menos de 1%.`])
+  })
+})

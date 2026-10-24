@@ -51,7 +51,10 @@ export interface EntradaSimulacao {
   contas: Conta[]
   categorias: Categoria[]
   planejados: MesPlanejado[]
+  /** Gastos que saem dos tetos, por mês (compras no crédito pela regra da fatura ficam fora). */
   gastosPorMes: Record<Mes, Centavos>
+  /** Fatura do cartão que entra no plano de cada mês (seção 5.4). Mês ausente = 0. */
+  faturas?: Record<Mes, Centavos>
   de: Mes
   ate: Mes
 }
@@ -77,6 +80,7 @@ export function simularMeses(entrada: EntradaSimulacao): MesSimulado[] {
       mes,
       desejos: planejamento.desejos,
       colchao: aSepararNoColchao(planejamento.colchao, meta, saldo),
+      fatura: entrada.faturas?.[mes] ?? 0,
     })
 
     const tetoTotal = Object.values(plano.tetos).reduce((soma, teto) => soma + teto, 0)

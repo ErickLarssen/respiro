@@ -1,7 +1,10 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { mesDeInicio } from '../domain/colchao'
+import { mesDaData } from '../domain/datas'
 import { planejamentoInicial } from '../domain/planejamento'
 import type { Categoria, Config, Conta, Gasto, MesPlanejado } from '../domain/tipos'
+import { cartaoDoLimiteAntigo } from './migracoes'
+import { hojeNoAparelho } from './relogio'
 
 // O banco de dados do aparelho (IndexedDB, via Dexie). Schema: docs/04-modelo-de-dados.md
 // Só a pasta src/data/ importa este arquivo.
@@ -34,4 +37,17 @@ db.version(2)
     if (!config) return // app ainda sem dados: nada a migrar
     const categorias = await tx.table<Categoria>('categorias').toArray()
     await tx.table<MesPlanejado>('planosDoMes').put(planejamentoInicial(categorias, mesDeInicio(config)))
+  })
+
+// Versão 3: cartão de crédito com fatura (docs/03-regras-de-negocio.md, seção 5).
+// Migração: o antigo config.limiteCartao vira config.cartao. As compras no crédito
+// até o fim deste mês continuam pela regra anterior (já contaram nos tetos).
+db.version(3)
+  .stores({})
+  .upgrade(async (tx) => {
+    const tabela = tx.table<Config & { limiteCartao?: number }>('config')
+    const config = await tabela.get('principal')
+    if (!config || config.limiteCartao === undefined) return
+    const { limiteCartao, ...resto } = config
+    await tabela.put({ ...resto, cartao: cartaoDoLimiteAntigo(limiteCartao, mesDaData(hojeNoAparelho())) })
   })

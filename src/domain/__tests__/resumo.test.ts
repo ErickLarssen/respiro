@@ -66,7 +66,7 @@ describe('resumoDoMes', () => {
     expect(resumo.porDia).toBe(1795)
 
     const lazer = resumo.categorias.find((c) => c.id === 'lazer')
-    expect(lazer).toEqual({ id: 'lazer', teto: 8000, gasto: 3500, restante: 4500, estado: 'ok' })
+    expect(lazer).toEqual({ id: 'lazer', teto: 8000, gasto: 3500, restante: 4500, estado: 'ok', noCredito: 0 })
   })
 
   it('lista as categorias na ordem do plano', () => {
@@ -87,6 +87,7 @@ describe('resumoDoMes', () => {
       gasto: 2000,
       restante: -2000,
       estado: 'estourou',
+      noCredito: 0,
     })
     expect(resumo.gastoTotal).toBe(2000)
     expect(resumo.restante).toBe(41209 - 2000)

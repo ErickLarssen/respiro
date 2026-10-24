@@ -6,7 +6,8 @@ import Cartao from '../components/ui/Cartao'
 import GraficoProjecao from '../components/ui/GraficoProjecao'
 import SeletorDeMes from '../components/ui/SeletorDeMes'
 import { contaAtivaNoMes, fimDasParcelas, parcelasQueLiberamEm } from '../domain/contas'
-import { mesAbreviado, mesPorExtenso, nomeDoMes, somarMeses } from '../domain/datas'
+import { diaEMes, mesAbreviado, mesPorExtenso, nomeDoMes, somarMeses } from '../domain/datas'
+import { dataDeVencimento } from '../domain/credito'
 import { formatarBRL } from '../domain/dinheiro'
 import { projecao } from '../domain/projecao'
 import type { Mes, Situacao } from '../domain/tipos'
@@ -61,7 +62,13 @@ export default function Plano() {
   const meses = projecao(config, contas, categorias, mes, 12, {
     planejados: dados.planejados,
     gastosPorMes: dados.gastosPorMes,
+    faturas: Object.fromEntries(Object.entries(dados.faturas).map(([m, f]) => [m, f.valor])),
   })
+  // Linha da fatura: só com cartão, e a partir do mês em que a regra da fatura vale
+  const mostrarFatura = !!config.cartao && (mes >= config.cartao.regraDesde || plano.fatura > 0)
+  const rotuloFatura = config.cartao
+    ? `Fatura do cartão (vence ${diaEMes(dataDeVencimento(mes, config.cartao))}${dados.faturaDoMes.estimada ? ', estimada' : ''})`
+    : 'Fatura do cartão'
   const origem =
     planejamento.origem === mes
       ? `Plano próprio de ${nomeDoMes(mes)}.`
@@ -125,6 +132,7 @@ export default function Plano() {
               )}
             </AnimatePresence>
           </div>
+          {mostrarFatura && <Linha sinal="−" rotulo={rotuloFatura} valor={plano.fatura} />}
           <Linha sinal="=" rotulo="Sobra" valor={plano.sobra} destaque="font-medium" />
           <Linha sinal="−" rotulo="Essenciais" valor={essenciais} />
           {(meta > 0 || plano.colchao > 0) && <Linha sinal="−" rotulo="Colchão" valor={plano.colchao} />}

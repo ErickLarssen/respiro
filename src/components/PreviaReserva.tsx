@@ -29,6 +29,7 @@ export default function PreviaReserva({ dados, mudanca }: { dados: PlanoDoMes; m
     mes: dados.plano.mes,
     desejos: { ...dados.planejamento.desejos, ...mudanca.desejos },
     colchao: aSepararNoColchao(mudanca.colchao ?? dados.planejamento.colchao, meta, dados.colchao.saldoInicial),
+    fatura: dados.plano.fatura, // a fatura do cartão do mês não muda com estas mudanças
   })
   const subiu = depois.reserva > dados.plano.reserva
   const desceu = depois.reserva < dados.plano.reserva

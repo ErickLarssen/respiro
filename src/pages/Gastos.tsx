@@ -6,7 +6,7 @@ import Cartao from '../components/ui/Cartao'
 import SeletorDeMes from '../components/ui/SeletorDeMes'
 import Valor from '../components/ui/Valor'
 import { apagarGasto } from '../data/repositorio'
-import { gastoNoCredito, limiteLivre } from '../domain/credito'
+import { contaNoTeto, gastoNoCredito } from '../domain/credito'
 import { diaEMes, mesPorExtenso, nomeDoMes, semanaCurta, somarMeses } from '../domain/datas'
 import { formatarBRL } from '../domain/dinheiro'
 import type { Categoria, DataISO, FormaPagamento, Gasto } from '../domain/tipos'
@@ -17,8 +17,8 @@ import { usePlanoDoMes } from '../hooks/usePlanoDoMes'
 import { fadeRapido, molaSuave } from '../ui/movimento'
 import { useDeslizarHorizontal } from '../ui/useDeslizarHorizontal'
 
-// Tela Gastos (docs/05-telas-e-fluxos.md): total do mês, quanto foi no crédito e a
-// lista por dia. Tocar num gasto mostra "Editar" e "Apagar gasto".
+// Tela Gastos (docs/05-telas-e-fluxos.md): total do mês, o cartão (fatura aberta, fatura
+// a pagar e limite livre) e a lista por dia. Tocar num gasto mostra "Editar" e "Apagar gasto".
 
 const FORMAS: Record<FormaPagamento, string> = { pix: 'Pix', debito: 'Débito', dinheiro: 'Dinheiro', credito: 'Crédito' }
 
@@ -44,12 +44,14 @@ export default function Gastos() {
 
   if (!dados || !gastos) return null
 
-  const { config, contas, categorias } = dados
+  const { categorias, cartao } = dados
   const porId = new Map(categorias.map((c) => [c.id, c]))
   const total = gastos.reduce((soma, gasto) => soma + gasto.valor, 0)
   const noCredito = gastoNoCredito(gastos, mes)
-  const livre =
-    config.limiteCartao !== undefined ? limiteLivre({ limite: config.limiteCartao, gastos, contas, mes }) : null
+  // Com cartão: quanto saiu dos tetos e quanto foi para a fatura (regra da seção 5)
+  const naFatura = cartao
+    ? gastos.filter((gasto) => !contaNoTeto(gasto, cartao.cartao)).reduce((soma, gasto) => soma + gasto.valor, 0)
+    : 0
 
   async function apagar(gasto: Gasto) {
     await apagarGasto(gasto.id)
@@ -70,17 +72,41 @@ export default function Gastos() {
           <span className="rotulo text-[10px] text-fg-muted">Gasto no mês</span>
           <Valor valor={total} className="font-display text-[28px] tracking-[-0.01em]" />
         </div>
-        <p className="text-small text-fg-muted">
-          No crédito este mês: <span className="font-mono text-fg">{formatarBRL(noCredito)}</span> (vence no dia 20 do
-          mês que vem)
-        </p>
-        {livre !== null && (
+        {cartao ? (
           <p className="text-small text-fg-muted">
-            Limite livre no cartão:{' '}
-            <span className={`font-mono ${livre < 0 ? 'text-danger' : 'text-fg'}`}>{formatarBRL(livre)}</span>
+            Nos tetos: <span className="font-mono text-fg">{formatarBRL(total - naFatura)}</span> · No crédito:{' '}
+            <span className="font-mono text-fg">{formatarBRL(naFatura)}</span>
+          </p>
+        ) : (
+          <p className="text-small text-fg-muted">
+            No crédito este mês: <span className="font-mono text-fg">{formatarBRL(noCredito)}</span> (vence no dia 20 do
+            mês que vem)
           </p>
         )}
       </Cartao>
+
+      {cartao && (
+        <Cartao className="flex flex-col gap-2">
+          <span className="rotulo text-[10px] text-fg-muted">Cartão de crédito</span>
+          <p className="text-small text-fg-muted">
+            Fatura de {nomeDoMes(cartao.aberta.mes)} (aberta, fecha {diaEMes(cartao.aberta.fechamento)}, vence{' '}
+            {diaEMes(cartao.aberta.vencimento)}): <span className="font-mono text-fg">{formatarBRL(cartao.aberta.valor)}</span>
+          </p>
+          {cartao.aPagar && (
+            <p className="text-small text-fg-muted">
+              A pagar: fatura de {nomeDoMes(cartao.aPagar.mes)}, vence {diaEMes(cartao.aPagar.vencimento)}:{' '}
+              <span className="font-mono text-fg">{formatarBRL(cartao.aPagar.noBanco)}</span>
+            </p>
+          )}
+          <p className="text-small text-fg-muted">
+            Limite livre:{' '}
+            <span className={`font-mono ${cartao.limiteLivre < 0 ? 'text-danger' : 'text-fg'}`}>
+              {formatarBRL(cartao.limiteLivre)}
+            </span>{' '}
+            de {formatarBRL(cartao.cartao.limite)}
+          </p>
+        </Cartao>
+      )}
 
       {gastos.length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-10 text-center">
@@ -150,6 +176,7 @@ function LinhaGasto({ gasto, categoria, aberta, onAlternar, onEditar, onApagar }
           <span className="truncate text-[15px]">{gasto.descricao ?? nomeDaCategoria}</span>
           <span className="text-small text-fg-muted">
             {nomeDaCategoria} · {FORMAS[gasto.forma]}
+            {gasto.parcelas && gasto.parcelas > 1 ? ` ${gasto.parcelas}x` : ''}
           </span>
         </span>
         <span className="font-mono text-num tabular-nums">{formatarBRL(gasto.valor)}</span>

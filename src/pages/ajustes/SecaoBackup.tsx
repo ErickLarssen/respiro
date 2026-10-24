@@ -4,6 +4,7 @@ import Botao from '../../components/ui/Botao'
 import { lerBackup, montarBackup, nomeDoArquivo, resumoDoBackup } from '../../data/backup'
 import type { DadosIniciais } from '../../data/dadosIniciais'
 import { lerTudo, substituirTudo } from '../../data/repositorio'
+import { mesDaData } from '../../domain/datas'
 import { useHoje } from '../../hooks/useHoje'
 import { useLayout } from '../../hooks/useLayout'
 import { Secao } from './comum'
@@ -45,7 +46,7 @@ export default function SecaoBackup() {
     e.target.value = '' // permite escolher o mesmo arquivo de novo
     if (!arquivo) return
     setErro(null)
-    const resultado = lerBackup(await arquivo.text())
+    const resultado = lerBackup(await arquivo.text(), mesDaData(hoje))
     if (resultado.ok) setParaImportar(resultado.dados)
     else setErro(resultado.erro)
   }

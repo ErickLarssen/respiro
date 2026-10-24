@@ -7,6 +7,7 @@ import type { Categoria, Centavos, Config, Conta, Mes, MesPlanejado } from './ti
 export interface MesProjetado {
   mes: Mes
   contasFixas: Centavos
+  fatura: Centavos // fatura do cartão que vence no mês (real ou estimada)
   reserva: Centavos
   acumulado: Centavos // soma das reservas desde o mês inicial, inclusive este
   colchao: Centavos // separado no colchão neste mês
@@ -16,8 +17,10 @@ export interface MesProjetado {
 export interface ExtrasProjecao {
   /** Planos salvos de cada mês (sem eles, valem os desejos das categorias). */
   planejados?: MesPlanejado[]
-  /** Gastos já feitos por mês: afetam o saldo do colchão dos meses passados e do atual. */
+  /** Gastos já feitos por mês (só os que saem dos tetos): afetam o saldo do colchão. */
   gastosPorMes?: Record<Mes, Centavos>
+  /** Fatura do cartão de cada mês (seção 5.4). */
+  faturas?: Record<Mes, Centavos>
 }
 
 /**
@@ -40,6 +43,7 @@ export function projecao(
     categorias,
     planejados: extras.planejados ?? [],
     gastosPorMes: extras.gastosPorMes ?? {},
+    faturas: extras.faturas ?? {},
     de,
     ate: somarMeses(mesInicial, meses - 1),
   }).filter((simulado) => simulado.mes >= mesInicial)
@@ -50,6 +54,7 @@ export function projecao(
     return {
       mes,
       contasFixas: plano.contasFixas,
+      fatura: plano.fatura,
       reserva: plano.reserva,
       acumulado,
       colchao: colchao.separado,
