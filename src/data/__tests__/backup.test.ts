@@ -14,7 +14,7 @@ const gasto = {
 
 describe('montarBackup e nomeDoArquivo', () => {
   it('põe a versão no backup', () => {
-    expect(montarBackup(dadosIniciais).versao).toBe(1)
+    expect(montarBackup(dadosIniciais).versao).toBe(2)
   })
 
   it('nomeia o arquivo com a data', () => {
@@ -56,7 +56,7 @@ describe('validarBackup', () => {
   })
 
   it('recusa versão desconhecida', () => {
-    expect(validarBackup({ ...dadosDoJson, versao: 2 })).toEqual({
+    expect(validarBackup({ ...dadosDoJson, versao: 3 })).toEqual({
       ok: false,
       erro: 'Este backup é de uma versão que o app não conhece.',
     })
@@ -94,6 +94,44 @@ describe('lerBackup', () => {
     expect(lerBackup('{ isto não é json')).toEqual({
       ok: false,
       erro: 'Não deu para ler o arquivo. Escolha um backup .json do Respiro.',
+    })
+  })
+})
+
+describe('backup versão 2 (plano por mês e colchão)', () => {
+  const plano = { mes: '2026-11', desejos: { higiene: 10000, churrasco: 25000 }, colchao: 5000 }
+
+  it('backup da versão 1 ganha o plano do primeiro mês, com os valores das categorias', () => {
+    const resultado = validarBackup(dadosDoJson) // docs/dados-iniciais.json é versão 1
+    expect(resultado.ok && resultado.dados.planosDoMes).toEqual([
+      { mes: '2026-10', desejos: { higiene: 10000, churrasco: 18000, lazer: 8000, roupas: 5209 }, colchao: 0 },
+    ])
+  })
+
+  it('lê os planos de cada mês e a meta do colchão', () => {
+    const bruto = {
+      ...dadosDoJson,
+      versao: 2,
+      config: { ...dadosDoJson.config, metaColchao: 30000 },
+      planosDoMes: [plano],
+    }
+    const resultado = validarBackup(bruto)
+    expect(resultado.ok && resultado.dados.planosDoMes).toEqual([plano])
+    expect(resultado.ok && resultado.dados.config.metaColchao).toBe(30000)
+  })
+
+  it('versão 2 precisa da lista de planos', () => {
+    expect(validarBackup({ ...dadosDoJson, versao: 2 })).toEqual({
+      ok: false,
+      erro: 'O arquivo não tem a lista de planos dos meses.',
+    })
+  })
+
+  it('recusa valor de categoria com casas decimais no plano do mês', () => {
+    const quebrado = { ...dadosDoJson, versao: 2, planosDoMes: [{ ...plano, desejos: { higiene: 100.5 } }] }
+    expect(validarBackup(quebrado)).toEqual({
+      ok: false,
+      erro: 'Plano do mês 1: "higiene" precisa ser um valor em centavos.',
     })
   })
 })

@@ -1,11 +1,12 @@
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
+import Botao from '../components/ui/Botao'
 import Cartao from '../components/ui/Cartao'
 import GraficoProjecao from '../components/ui/GraficoProjecao'
 import SeletorDeMes from '../components/ui/SeletorDeMes'
 import { contaAtivaNoMes, fimDasParcelas, parcelasQueLiberamEm } from '../domain/contas'
-import { mesAbreviado, mesPorExtenso, somarMeses } from '../domain/datas'
+import { mesAbreviado, mesPorExtenso, nomeDoMes, somarMeses } from '../domain/datas'
 import { formatarBRL } from '../domain/dinheiro'
 import { projecao } from '../domain/projecao'
 import type { Mes, Situacao } from '../domain/tipos'
@@ -13,9 +14,11 @@ import { useMesSelecionado } from '../hooks/useMesSelecionado'
 import { usePlanoDoMes } from '../hooks/usePlanoDoMes'
 import { fadeRapido, molaSuave } from '../ui/movimento'
 import { useDeslizarHorizontal } from '../ui/useDeslizarHorizontal'
+import EditorDoMes from './plano/EditorDoMes'
 
 // Tela Plano (docs/05-telas-e-fluxos.md): explica o plano como uma conta, de cima para baixo,
-// e mostra a reserva dos próximos 12 meses e quando cada parcela acaba.
+// permite ajustar o plano do mês e mostra a reserva dos próximos 12 meses e quando cada
+// parcela acaba.
 
 const COR_DA_MENSAGEM: Record<Situacao, string> = {
   folga: 'text-fg-muted',
@@ -45,15 +48,26 @@ export default function Plano() {
   const dados = usePlanoDoMes(mes)
   const deslizar = useDeslizarHorizontal((direcao) => trocarMes(somarMeses(mes, direcao)))
   const [verContas, setVerContas] = useState(false)
+  const [editando, setEditando] = useState<Mes | null>(null) // mês com o editor aberto
 
   if (!dados) return null
 
-  const { plano, config, contas, categorias } = dados
+  const { plano, config, contas, categorias, planejamento, colchao } = dados
+  const meta = config.metaColchao ?? 0
   const essenciais = categorias.filter((c) => c.essencial).reduce((soma, c) => soma + (plano.tetos[c.id] ?? 0), 0)
   const flexiveis = categorias.filter((c) => !c.essencial).reduce((soma, c) => soma + (plano.tetos[c.id] ?? 0), 0)
   const contasDoMes = contas.filter((conta) => contaAtivaNoMes(conta, mes))
 
-  const meses = projecao(config, contas, categorias, mes)
+  const meses = projecao(config, contas, categorias, mes, 12, {
+    planejados: dados.planejados,
+    gastosPorMes: dados.gastosPorMes,
+  })
+  const origem =
+    planejamento.origem === mes
+      ? `Plano próprio de ${nomeDoMes(mes)}.`
+      : planejamento.origem
+        ? `Copiado de ${mesPorExtenso(planejamento.origem)}.`
+        : 'Com os valores iniciais das categorias.'
   const liberacoes: Record<Mes, string[]> = Object.fromEntries(
     meses.map((m) => [m.mes, parcelasQueLiberamEm(contas, m.mes).map((c) => c.nome)]),
   )
@@ -113,6 +127,7 @@ export default function Plano() {
           </div>
           <Linha sinal="=" rotulo="Sobra" valor={plano.sobra} destaque="font-medium" />
           <Linha sinal="−" rotulo="Essenciais" valor={essenciais} />
+          {(meta > 0 || plano.colchao > 0) && <Linha sinal="−" rotulo="Colchão" valor={plano.colchao} />}
           <Linha sinal="−" rotulo="Gastos flexíveis" valor={flexiveis} />
           <Linha sinal="=" rotulo="Reserva" valor={plano.reserva} destaque="font-semibold text-ok" />
         </Cartao>
@@ -121,6 +136,30 @@ export default function Plano() {
             {mensagem}
           </p>
         ))}
+        {meta > 0 && (
+          <p className="text-small text-fg-muted">
+            Colchão no fim de {nomeDoMes(mes)}:{' '}
+            <span className="font-mono text-fg">{formatarBRL(colchao.saldoFinal)}</span> de {formatarBRL(meta)}
+            {colchao.usado > 0 && <> (usou {formatarBRL(colchao.usado)} para cobrir gastos acima do plano)</>}
+            {colchao.saldoInicial >= meta && <>. Meta batida: o que iria para ele vai para a reserva.</>}
+          </p>
+        )}
+      </section>
+
+      {/* Plano do mês: quanto gostaria de gastar em cada categoria, só neste mês */}
+      <section aria-label={`Plano de ${nomeDoMes(mes)}`} className="flex flex-col gap-3">
+        {editando === mes ? (
+          <Cartao>
+            <EditorDoMes key={mes} dados={dados} onFechar={() => setEditando(null)} />
+          </Cartao>
+        ) : (
+          <>
+            <Botao variante="secundario" onClick={() => setEditando(mes)}>
+              <SlidersHorizontal size={18} aria-hidden="true" /> Ajustar o plano de {nomeDoMes(mes)}
+            </Botao>
+            <p className="text-center text-small text-fg-faint">{origem}</p>
+          </>
+        )}
       </section>
 
       {/* Próximos 12 meses */}
@@ -133,6 +172,12 @@ export default function Plano() {
           Em 12 meses:{' '}
           <span className="font-mono font-medium text-ok">{formatarBRL(meses.at(-1)?.acumulado ?? 0)}</span>
         </p>
+        {meta > 0 && (
+          <p className="text-small text-fg-muted">
+            Colchão em {mesAbreviado(meses.at(-1)?.mes ?? mes)}:{' '}
+            <span className="font-mono text-fg">{formatarBRL(meses.at(-1)?.saldoColchao ?? 0)}</span>
+          </p>
+        )}
       </section>
 
       {/* Quando cada parcela acaba */}

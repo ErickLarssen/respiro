@@ -1,18 +1,10 @@
 import type { DadosAviso } from '../components/ui/Aviso'
-import type { Gasto } from '../domain/tipos'
-import {
-  adicionarGasto,
-  salvarGasto,
-  listarCategorias,
-  listarContas,
-  listarGastosDoMes,
-  obterConfig,
-  type NovoGasto,
-} from '../data/repositorio'
+import { adicionarGasto, listarGastosDoMes, salvarGasto, type NovoGasto } from '../data/repositorio'
 import { mesDaData } from '../domain/datas'
 import { formatarBRL } from '../domain/dinheiro'
-import { calcularPlano } from '../domain/plano'
 import { FORA_DO_PLANO, resumoDoMes } from '../domain/resumo'
+import type { Gasto } from '../domain/tipos'
+import { carregarPlanoDoMes } from './carregarPlanoDoMes'
 
 export type AvisoDoGasto = Omit<DadosAviso, 'id'>
 
@@ -25,20 +17,15 @@ export type AvisoDoGasto = Omit<DadosAviso, 'id'>
 export async function anotarGasto(novo: NovoGasto): Promise<AvisoDoGasto> {
   const gasto = await adicionarGasto(novo)
   const mes = mesDaData(gasto.data)
-  const [config, contas, categorias, gastos] = await Promise.all([
-    obterConfig(),
-    listarContas(),
-    listarCategorias(),
-    listarGastosDoMes(mes),
-  ])
+  // O mesmo cálculo da tela (com o plano salvo do mês e o colchão)
+  const [dados, gastos] = await Promise.all([carregarPlanoDoMes(mes), listarGastosDoMes(mes)])
 
-  const categoria = categorias.find((c) => c.id === gasto.categoriaId)
+  const categoria = dados?.categorias.find((c) => c.id === gasto.categoriaId)
   const nome = categoria?.nome ?? 'Fora do plano'
   const anotado: AvisoDoGasto = { tom: 'ok', texto: `Gasto anotado: ${formatarBRL(gasto.valor)} em ${nome}` }
-  if (!config || !categoria || gasto.categoriaId === FORA_DO_PLANO) return anotado
+  if (!dados || !categoria || gasto.categoriaId === FORA_DO_PLANO) return anotado
 
-  const plano = calcularPlano({ renda: config.renda, reservaMinima: config.reservaMinima, contas, categorias, mes })
-  const resumo = resumoDoMes({ plano, gastos, mes, hoje: gasto.data })
+  const resumo = resumoDoMes({ plano: dados.plano, gastos, mes, hoje: gasto.data })
   const linha = resumo.categorias.find((c) => c.id === categoria.id)
 
   if (linha?.estado === 'estourou') {

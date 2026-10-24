@@ -1,5 +1,6 @@
 import AnelFolego from '../components/ui/AnelFolego'
 import Cartao from '../components/ui/Cartao'
+import CartaoColchao from '../components/ui/CartaoColchao'
 import MedidorCategoria from '../components/ui/MedidorCategoria'
 import SeletorDeMes from '../components/ui/SeletorDeMes'
 import Valor from '../components/ui/Valor'
@@ -14,6 +15,7 @@ import {
   semanaCurta,
   somarMeses,
 } from '../domain/datas'
+import { fraseExcessoDoPlano } from '../domain/colchao'
 import { formatarBRL } from '../domain/dinheiro'
 import { FORA_DO_PLANO, resumoDoMes } from '../domain/resumo'
 import { diaDoSalario, proximoSalario } from '../domain/salario'
@@ -44,7 +46,8 @@ export default function Inicio() {
 
   if (!dados || !gastos) return null // carregando (é rápido: o banco está no aparelho)
 
-  const { plano, config, categorias } = dados
+  const { plano, config, categorias, colchao, excesso } = dados
+  const metaColchao = config.metaColchao ?? 0
   const resumo = resumoDoMes({ plano, gastos, mes, hoje })
   const momento = mes === mesAtual ? 'atual' : mes < mesAtual ? 'passado' : 'futuro'
   const nomeDoMesAberto = nomeDoMes(mes)
@@ -96,9 +99,10 @@ export default function Inicio() {
       <section aria-label="Quanto ainda posso gastar" className="flex flex-col items-center gap-3">
         <AnelFolego key={mes} {...anel} />
         {frasePorDia && <p className="text-center text-small text-fg-muted">{frasePorDia}</p>}
-        {resumo.restante < 0 && momento !== 'futuro' && (
+        {excesso > 0 && momento !== 'futuro' && (
+          // O excesso sai primeiro do colchão; só o que passar dele sai da reserva.
           <p role="alert" className="rounded-[var(--r-sm)] border border-danger/40 bg-danger/10 px-4 py-3 text-center text-small text-danger">
-            Você passou do plano em {formatarBRL(-resumo.restante)}. Isso sai da reserva deste mês.
+            {fraseExcessoDoPlano(excesso, colchao)}
           </p>
         )}
       </section>
@@ -123,6 +127,16 @@ export default function Inicio() {
           </span>
         </Cartao>
       </section>
+
+      {metaColchao > 0 && (
+        <CartaoColchao
+          saldo={colchao.saldoFinal}
+          meta={metaColchao}
+          separado={colchao.separado}
+          usado={colchao.usado}
+          passado={momento === 'passado'}
+        />
+      )}
 
       {(plano.situacao === 'critico' || plano.situacao === 'deficit') && (
         <p role="alert" className="text-small text-warn">

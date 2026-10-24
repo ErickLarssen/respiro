@@ -13,7 +13,8 @@ export interface Config {
   diaUtilSalario: number;      // 1 a 22
   reservaMinima: Centavos;
   limiteCartao?: Centavos;    // opcional, só para mostrar o limite livre
-  criadoEm: DataISO;
+  metaColchao?: Centavos;     // ao chegar nesse saldo, o colchão para de crescer; 0 ou ausente = sem colchão
+  criadoEm: DataISO;          // o mês desta data é o início do histórico do colchão
 }
 
 export interface Conta {
@@ -30,7 +31,7 @@ export interface Conta {
 export interface Categoria {
   id: string;
   nome: string;
-  desejo: Centavos;            // quanto o usuário gostaria de gastar por mês
+  desejo: Centavos;            // valor dos meses anteriores ao primeiro plano salvo (o de cada mês fica em MesPlanejado)
   essencial: boolean;
   descricao?: string;          // ex.: "Pizza, lanches e cinema"
   cor: "c1" | "c2" | "c3" | "c4" | "c5";
@@ -49,12 +50,21 @@ export interface Gasto {
   criadoEm: string;            // ISO completo, para desempate na ordenação
 }
 
+// O plano que o usuário salvou para um mês (03-regras-de-negocio, seção 7).
+// Um mês sem registro copia o último mês planejado antes dele.
+export interface MesPlanejado {
+  mes: Mes;
+  desejos: Record<string, Centavos>; // por id de categoria; categoria ausente = 0 neste mês
+  colchao: Centavos;                 // quanto separar no colchão neste mês
+}
+
 export interface Plano {
   mes: Mes;
   renda: Centavos;
   contasFixas: Centavos;
   sobra: Centavos;
   tetos: Record<string, Centavos>;
+  colchao: Centavos;                 // quanto vai de fato para o colchão neste mês
   reserva: Centavos;
   situacao: "folga" | "justo" | "apertado" | "critico" | "deficit";
   mensagens: string[];
@@ -72,7 +82,12 @@ db.version(1).stores({
   categorias: "id, ordem",
   gastos:     "id, data, categoriaId",   // índice em data para filtrar o mês
 });
+
+// Versão 2: plano de cada mês
+db.version(2).stores({ planosDoMes: "mes" }).upgrade(/* migração, abaixo */);
 ```
+
+**Migração da versão 1 para a 2:** se já existe config, o app cria um plano salvo no mês de `config.criadoEm` com os valores que as categorias tinham (`planejamentoInicial`). Assim, quem já usava o app não vê nada mudar. Há um teste que cria um banco na versão 1 e o abre com o código novo (`src/data/__tests__/migracao.test.ts`).
 
 Gastos do mês: `db.gastos.where("data").between("2026-10-01", "2026-10-31", true, true)`. Strings no formato `AAAA-MM-DD` ordenam corretamente como texto.
 
@@ -85,7 +100,8 @@ Se a tabela `config` estiver vazia ao abrir o app, mostrar uma tela com duas op�
 ## Backup
 
 Como os dados só existem no aparelho, apagar os dados do navegador apaga tudo. A tela Ajustes tem:
-- **Exportar backup**: gera `respiro-backup-AAAA-MM-DD.json` com `{ versao: 1, config, contas, categorias, gastos }`.
+- **Exportar backup**: gera `respiro-backup-AAAA-MM-DD.json` com `{ versao: 2, config, contas, categorias, gastos, planosDoMes }`.
+- **Backups da versão 1** (anteriores ao plano por mês) continuam aceitos: na importação, ganham o plano do primeiro mês, como na migração do banco.
 - **Importar backup**: lê o arquivo, valida a `versao` e os campos obrigatórios, mostra um resumo ("12 contas, 4 categorias, 87 gastos") e só substitui depois de o usuário confirmar.
 
 ## Armazenamento persistente

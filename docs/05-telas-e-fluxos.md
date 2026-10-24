@@ -8,9 +8,11 @@ As abas Início, Gastos e Plano têm um **seletor de mês** no topo (‹ outubro
 
 Responde a três perguntas, nesta ordem:
 
-1. **Quanto ainda posso gastar?** Número grande: `restante`. Abaixo: "Cerca de R$ 17,95 por dia até 31/out (21 dias)". Se `restante < 0`, o número fica em vermelho e aparece o aviso de "passou do plano".
+1. **Quanto ainda posso gastar?** Número grande: `restante`. Abaixo: "Cerca de R$ 17,95 por dia até 31/out (21 dias)". Se `restante < 0`, o número fica em vermelho e aparece o aviso de "passou do plano", dizendo de onde sai o excesso: primeiro do colchão, depois da reserva (`03`, seção 8).
 2. **Quanto vou guardar?** Cartão: "Guarde R$ 51,92 assim que o salário cair".
 3. **Quando cai o salário?** Cartão: "Salário: qui, 15/out (em 4 dias)".
+
+Com meta de colchão cadastrada, aparece também o cartão **Colchão**: saldo, meta, uma barra segmentada e o que fazer no mês ("Separe R$ 50,00 assim que o salário cair", "usou R$ 16,00 este mês" ou "Meta batida").
 
 Depois, a lista **Seus tetos**: para cada categoria, o nome, "R$ 35,00 de R$ 80,00", uma barra de progresso na cor da categoria e o estado (ok, atenção ou estourou) como etiqueta colorida. Se houver gastos "fora do plano", aparece uma linha a mais.
 
@@ -42,20 +44,23 @@ Renda                          R$ 1.606,00
 − Contas fixas                 R$ 1.141,99   (toque para ver a lista)
 = Sobra                        R$   464,01
 − Essenciais                   R$   100,00
+− Colchão                      R$    50,00   (só com meta de colchão)
 − Gastos flexíveis             R$   312,09
 = Reserva                      R$    51,92
 ```
 
-Abaixo, as mensagens do plano (ex.: "Seus planos couberam. Os R$ 1,92 que sobraram vão para a reserva.").
+Abaixo, as mensagens do plano (ex.: "Seus planos couberam. Os R$ 1,92 que sobraram vão para a reserva.") e, com colchão, "Colchão no fim de novembro: R$ 50,00 de R$ 300,00".
 
-Depois, **Próximos 12 meses**: gráfico de barras simples da reserva de cada mês, com o acumulado no fim ("Em 12 meses: R$ 5.934,04"), e a lista **Quando cada parcela acaba** ("Notebook Dell: última em mai/27, libera R$ 395,00 a partir de jun/27").
+**Ajustar o plano do mês** (`03`, seção 7): botão "Ajustar o plano de novembro", com a origem embaixo ("Copiado de outubro de 2026." ou "Plano próprio de novembro."). Abre um campo por categoria e o campo do colchão, com a prévia na reserva antes de salvar. Se o mês tem plano próprio, oferece "Voltar a copiar outubro".
+
+Depois, **Próximos 12 meses**: gráfico de barras simples da reserva de cada mês, com o acumulado no fim ("Em 12 meses: R$ 5.934,04") e, com colchão, o saldo dele no último mês, e a lista **Quando cada parcela acaba** ("Notebook Dell: última em mai/27, libera R$ 395,00 a partir de jun/27").
 
 ## Ajustes (`/ajustes`)
 
 Seções, cada uma salvando ao tocar em "Salvar":
-- **Renda**: valor, dia útil do salário e reserva mínima.
+- **Renda**: valor, dia útil do salário, reserva mínima, **meta do colchão** (0 = sem colchão) e limite do cartão (opcional).
 - **Contas fixas**: lista editável. Cada linha tem nome, valor, tipo e, se for parcela, "parcelas restantes". Botões para adicionar e remover.
-- **Categorias**: nome, "quanto gostaria de gastar", essencial (sim/não), descrição.
+- **Categorias**: nome, essencial (sim/não), descrição e cor. O valor de cada mês é ajustado na aba Plano; uma categoria nova pede o valor "a partir deste mês".
 - **Backup**: exportar e importar.
 - **Apagar tudo**: com confirmação digitando "APAGAR".
 

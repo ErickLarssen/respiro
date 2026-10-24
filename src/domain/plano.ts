@@ -6,7 +6,7 @@ import type { Categoria, Centavos, Conta, Mes, Plano, Situacao } from './tipos'
 // O plano automático do mês. Regras: docs/03-regras-de-negocio.md, seção 2.
 //
 // Ordem de prioridade do dinheiro que sobra depois das contas fixas:
-//   1. essenciais  2. reserva mínima  3. flexíveis  4. o resto vai para a reserva
+//   1. essenciais  2. colchão  3. reserva mínima  4. flexíveis  5. o resto vai para a reserva
 
 export interface EntradaPlano {
   renda: Centavos
@@ -14,6 +14,10 @@ export interface EntradaPlano {
   contas: Conta[]
   categorias: Categoria[]
   mes: Mes
+  /** Quanto gostaria de gastar em cada categoria neste mês. Sem isto, vale categoria.desejo. */
+  desejos?: Record<string, Centavos>
+  /** Quanto separar no colchão neste mês (já limitado pela meta). Sem isto, 0. */
+  colchao?: Centavos
 }
 
 interface Reparticao {
@@ -54,6 +58,7 @@ function planoDeDeficit(entrada: EntradaPlano, contasFixas: Centavos, sobra: Cen
     contasFixas,
     sobra,
     tetos,
+    colchao: 0,
     reserva: 0,
     situacao: 'deficit',
     mensagens: [`As contas fixas passam da renda em ${formatarBRL(-sobra)}.`],
@@ -73,7 +78,13 @@ export function fraseEfeitoNaReserva(antes: Plano, depois: Plano): string {
 }
 
 export function calcularPlano(entrada: EntradaPlano): Plano {
-  const { renda, reservaMinima, categorias, mes } = entrada
+  const { renda, reservaMinima, mes } = entrada
+  const colchaoDesejado = entrada.colchao ?? 0
+  // Cada categoria com o desejo deste mês (o plano do mês tem prioridade sobre categoria.desejo)
+  const categorias = entrada.categorias.map((categoria) => ({
+    ...categoria,
+    desejo: entrada.desejos?.[categoria.id] ?? categoria.desejo,
+  }))
   const contasFixas = totalContasFixas(entrada.contas, mes)
   const sobra = renda - contasFixas
 
@@ -88,29 +99,39 @@ export function calcularPlano(entrada: EntradaPlano): Plano {
   )
   disponivel -= essenciais.total
 
-  // 2. Reserva mínima
+  // 2. Colchão ("para não passar o mês duro"), antes da reserva
+  const colchao = Math.min(colchaoDesejado, disponivel)
+  disponivel -= colchao
+  const colchaoCortado = colchao < colchaoDesejado
+
+  // 3. Reserva mínima
   let reserva = Math.min(reservaMinima, disponivel)
   disponivel -= reserva
   const reservaMinimaCortada = reserva < reservaMinima
 
-  // 3. Flexíveis; o que sobrar (inclusive centavos do arredondamento) vai para a reserva
+  // 4. Flexíveis; o que sobrar (inclusive centavos do arredondamento) vai para a reserva
   const flexiveis = repartir(
     categorias.filter((categoria) => !categoria.essencial),
     disponivel,
   )
   reserva += disponivel - flexiveis.total
 
-  // 4. Situação e mensagem
+  // 5. Situação e mensagem
   let situacao: Situacao
   let mensagem: string
-  if (essenciais.cortou || reservaMinimaCortada) {
+  if (essenciais.cortou || colchaoCortado || reservaMinimaCortada) {
     situacao = 'critico'
-    mensagem = `Depois das contas fixas sobram só ${formatarBRL(sobra)}. Não dá para cobrir os essenciais e a reserva.`
+    const protegidos = colchaoDesejado > 0 ? 'os essenciais, o colchão e a reserva' : 'os essenciais e a reserva'
+    mensagem = `Depois das contas fixas sobram só ${formatarBRL(sobra)}. Não dá para cobrir ${protegidos}.`
   } else if (flexiveis.cortou) {
     situacao = 'apertado'
     const corte = flexiveis.desejado - flexiveis.total
     const percentual = Math.round((corte * 100) / flexiveis.desejado)
-    mensagem = `Para guardar ${formatarBRL(reservaMinima)}, reduzi os gastos flexíveis em ${percentual}%.`
+    const objetivo =
+      colchao > 0
+        ? `separar ${formatarBRL(colchao)} no colchão e guardar ${formatarBRL(reservaMinima)}`
+        : `guardar ${formatarBRL(reservaMinima)}`
+    mensagem = `Para ${objetivo}, reduzi os gastos flexíveis em ${percentual}%.`
   } else if (reserva > reservaMinima) {
     situacao = 'folga'
     mensagem = `Seus planos couberam. Os ${formatarBRL(reserva - reservaMinima)} que sobraram vão para a reserva.`
@@ -131,6 +152,7 @@ export function calcularPlano(entrada: EntradaPlano): Plano {
         essenciais.tetos[categoria.id] ?? flexiveis.tetos[categoria.id] ?? 0,
       ]),
     ),
+    colchao,
     reserva,
     situacao,
     mensagens: [mensagem],

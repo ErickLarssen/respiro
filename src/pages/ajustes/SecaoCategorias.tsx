@@ -3,16 +3,19 @@ import { useState } from 'react'
 import Botao from '../../components/ui/Botao'
 import Campo from '../../components/ui/Campo'
 import Segmentado from '../../components/ui/Segmentado'
-import { apagarCategoria, salvarCategoria } from '../../data/repositorio'
-import { formatarBRL, lerValorDigitado, valorParaDigitar } from '../../domain/dinheiro'
+import { adicionarCategoriaNoPlano, apagarCategoria, salvarCategoria } from '../../data/repositorio'
+import { nomeDoMes } from '../../domain/datas'
+import { formatarBRL, lerValorDigitado } from '../../domain/dinheiro'
 import type { Categoria } from '../../domain/tipos'
 import { useLayout } from '../../hooks/useLayout'
 import type { PlanoDoMes } from '../../hooks/usePlanoDoMes'
-import { PreviaReserva, Secao } from './comum'
+import PreviaReserva from '../../components/PreviaReserva'
+import { Secao } from './comum'
 import { proximaOrdem } from './ordem'
 
-// Ajustes › Categorias: nome, "quanto gostaria de gastar", essencial ou flexível,
-// descrição e cor. O plano decide o teto de cada uma (docs/03-regras-de-negocio.md, seção 2).
+// Ajustes › Categorias: nome, essencial ou flexível, descrição e cor. O valor de cada
+// mês fica no plano do mês (aba Plano). Uma categoria nova pede o valor "a partir deste
+// mês" (docs/03-regras-de-negocio.md, seção 7).
 
 const CORES: Categoria['cor'][] = ['c1', 'c2', 'c3', 'c4', 'c5']
 
@@ -22,7 +25,7 @@ export default function SecaoCategorias({ dados }: { dados: PlanoDoMes }) {
   return (
     <Secao
       titulo="Categorias"
-      descricao="Essenciais recebem o valor inteiro; flexíveis são reduzidas se o dinheiro não der."
+      descricao="Essenciais recebem o valor inteiro; flexíveis são reduzidas se o dinheiro não der. O valor de cada mês você ajusta na aba Plano."
     >
       {dados.categorias.length === 0 && editando !== 'nova' && (
         <p className="text-small text-fg-muted">Nenhuma categoria ainda.</p>
@@ -48,7 +51,9 @@ export default function SecaoCategorias({ dados }: { dados: PlanoDoMes }) {
                     {formatarBRL(dados.plano.tetos[categoria.id] ?? 0)}
                   </span>
                 </span>
-                <span className="font-mono text-num tabular-nums">{formatarBRL(categoria.desejo)}</span>
+                <span className="font-mono text-num tabular-nums">
+                  {formatarBRL(dados.planejamento.desejos[categoria.id] ?? 0)}
+                </span>
               </button>
             </li>
           ),
@@ -75,7 +80,7 @@ interface EditorCategoriaProps {
 function EditorCategoria({ dados, categoria, onFechar }: EditorCategoriaProps) {
   const { mostrarAviso } = useLayout()
   const [nome, setNome] = useState(categoria?.nome ?? '')
-  const [desejo, setDesejo] = useState(categoria ? valorParaDigitar(categoria.desejo) : '')
+  const [desejo, setDesejo] = useState('') // só para categoria nova
   const [tipo, setTipo] = useState<'essencial' | 'flexivel'>(categoria?.essencial ? 'essencial' : 'flexivel')
   const [descricao, setDescricao] = useState(categoria?.descricao ?? '')
   const [cor, setCor] = useState<Categoria['cor']>(
@@ -87,15 +92,16 @@ function EditorCategoria({ dados, categoria, onFechar }: EditorCategoriaProps) {
   const desejoLido = lerValorDigitado(desejo)
   const erros = {
     nome: nome.trim() === '' ? 'Dê um nome para a categoria.' : null,
-    desejo: desejoLido === null ? 'Digite quanto gostaria de gastar por mês.' : null,
+    desejo: !categoria && desejoLido === null ? 'Digite quanto gostaria de gastar por mês.' : null,
   }
+  const mes = dados.plano.mes
 
   function montar(): Categoria | null {
-    if (erros.nome || erros.desejo || desejoLido === null) return null
+    if (erros.nome || erros.desejo) return null
     const nova: Categoria = {
       id: categoria?.id ?? crypto.randomUUID(),
       nome: nome.trim(),
-      desejo: desejoLido,
+      desejo: categoria?.desejo ?? 0, // o valor de cada mês fica no plano do mês
       essencial: tipo === 'essencial',
       cor,
       ordem: categoria?.ordem ?? proximaOrdem(dados.categorias),
@@ -106,11 +112,14 @@ function EditorCategoria({ dados, categoria, onFechar }: EditorCategoriaProps) {
 
   const nova = montar()
   const categoriasDepois = nova ? [...dados.categorias.filter((c) => c.id !== nova.id), nova].sort((a, b) => a.ordem - b.ordem) : null
+  // Categoria nova: o valor digitado entra no plano deste mês
+  const desejosDepois = nova && !categoria && desejoLido !== null ? { [nova.id]: desejoLido } : undefined
 
   async function salvar() {
     setTentouSalvar(true)
     if (!nova) return
-    await salvarCategoria(nova)
+    if (categoria) await salvarCategoria(nova)
+    else await adicionarCategoriaNoPlano(nova, desejoLido ?? 0, mes)
     mostrarAviso({ tom: 'ok', texto: categoria ? 'Categoria salva' : 'Categoria adicionada' })
     onFechar()
   }
@@ -146,13 +155,16 @@ function EditorCategoria({ dados, categoria, onFechar }: EditorCategoriaProps) {
   return (
     <div className="flex flex-col gap-4">
       <Campo rotulo="Nome" value={nome} onChange={(e) => setNome(e.target.value)} erro={mostrar(erros.nome)} placeholder="Ex.: Mercado" />
-      <Campo
-        rotulo="Quanto gostaria de gastar por mês (R$)"
-        inputMode="decimal"
-        value={desejo}
-        onChange={(e) => setDesejo(e.target.value)}
-        erro={mostrar(erros.desejo)}
-      />
+      {!categoria && (
+        <Campo
+          rotulo={`Quanto gostaria de gastar por mês (R$)`}
+          inputMode="decimal"
+          value={desejo}
+          onChange={(e) => setDesejo(e.target.value)}
+          erro={mostrar(erros.desejo)}
+          dica={`Vale a partir de ${nomeDoMes(mes)}. Depois, ajuste cada mês na aba Plano.`}
+        />
+      )}
       <Segmentado
         rotulo="Tipo"
         idLente={`lente-essencial-${categoria?.id ?? 'nova'}`}
@@ -184,7 +196,7 @@ function EditorCategoria({ dados, categoria, onFechar }: EditorCategoriaProps) {
         </div>
       </fieldset>
 
-      {categoriasDepois && <PreviaReserva dados={dados} mudanca={{ categorias: categoriasDepois }} />}
+      {categoriasDepois && <PreviaReserva dados={dados} mudanca={{ categorias: categoriasDepois, desejos: desejosDepois }} />}
 
       <div className="grid grid-cols-2 gap-3">
         <Botao variante="secundario" onClick={onFechar}>

@@ -133,7 +133,7 @@ describe('propriedade: tudo soma a renda', () => {
     }
   }
 
-  it('contasFixas + soma(tetos) + reserva === renda sempre que sobra >= 0', () => {
+  it('contasFixas + soma(tetos) + colchão + reserva === renda sempre que sobra >= 0', () => {
     const sortear = sorteador(42)
     let casosComSobra = 0
 
@@ -149,6 +149,7 @@ describe('propriedade: tudo soma a renda', () => {
       const plano = calcularPlano({
         renda: sortear(300000),
         reservaMinima: sortear(20000),
+        colchao: sortear(1) === 1 ? sortear(20000) : 0,
         contas,
         categorias: categoriasSorteadas,
         mes: '2026-10',
@@ -157,7 +158,8 @@ describe('propriedade: tudo soma a renda', () => {
 
       casosComSobra++
       const somaTetos = Object.values(plano.tetos).reduce((a, b) => a + b, 0)
-      expect(plano.contasFixas + somaTetos + plano.reserva).toBe(plano.renda)
+      expect(plano.contasFixas + somaTetos + plano.colchao + plano.reserva).toBe(plano.renda)
+      expect(Number.isInteger(plano.colchao)).toBe(true)
       expect(Object.values(plano.tetos).every(Number.isInteger)).toBe(true)
       expect(Number.isInteger(plano.reserva)).toBe(true)
     }
@@ -179,5 +181,56 @@ describe('fraseEfeitoNaReserva', () => {
   it('avisa quando a reserva não muda', () => {
     const plano = calcularPlano(entrada('2026-10'))
     expect(fraseEfeitoNaReserva(plano, plano)).toBe(`Essa mudança não altera a reserva de outubro (${R$}51,92).`)
+  })
+})
+
+describe('desejos do mês', () => {
+  it('usa os desejos do mês no lugar de categoria.desejo', () => {
+    const plano = calcularPlano({ ...entrada('2026-11'), desejos: { higiene: 8000, churrasco: 0, lazer: 12000, roupas: 7990 } })
+    expect(plano.tetos).toEqual({ higiene: 8000, churrasco: 0, lazer: 12000, roupas: 7990 })
+    // 160600 − 84499 − 8000 − 12000 − 7990
+    expect(plano.reserva).toBe(48111)
+  })
+
+  it('categoria fora do mapa de desejos usa categoria.desejo', () => {
+    const plano = calcularPlano({ ...entrada('2026-10'), desejos: { churrasco: 0 } })
+    expect(plano.tetos).toEqual({ higiene: 10000, churrasco: 0, lazer: 8000, roupas: 5209 })
+  })
+})
+
+describe('colchão', () => {
+  it('é separado depois dos essenciais e antes da reserva (novembro, colchão de R$ 50)', () => {
+    const plano = calcularPlano({ ...entrada('2026-11'), colchao: 5000 })
+    expect(plano.colchao).toBe(5000)
+    expect(plano.tetos).toEqual({ higiene: 10000, churrasco: 18000, lazer: 8000, roupas: 5209 })
+    expect(plano.reserva).toBe(29892) // 34892 sem colchão − 5000
+    expect(plano.situacao).toBe('folga')
+  })
+
+  it('pode apertar os flexíveis (outubro, colchão de R$ 30)', () => {
+    const plano = calcularPlano({ ...entrada('2026-10'), colchao: 3000 })
+    // Sobra 46401 − 10000 − 3000 − 5000 = 28401 para flexíveis que querem 31209
+    expect(plano.tetos).toEqual({ higiene: 10000, churrasco: 16380, lazer: 7280, roupas: 4740 })
+    expect(plano.colchao).toBe(3000)
+    expect(plano.reserva).toBe(5001)
+    expect(plano.situacao).toBe('apertado')
+    expect(plano.mensagens).toEqual([
+      `Para separar ${R$}30,00 no colchão e guardar ${R$}50,00, reduzi os gastos flexíveis em 9%.`,
+    ])
+  })
+
+  it('vem antes da reserva mínima quando não dá para os dois', () => {
+    // Sobra 12000: higiene 10000, colchão recebe os 2000 restantes e a reserva fica sem nada
+    const plano = calcularPlano({ ...entrada('2026-10', 114199 + 12000), colchao: 5000 })
+    expect(plano.colchao).toBe(2000)
+    expect(plano.reserva).toBe(0)
+    expect(plano.situacao).toBe('critico')
+    expect(plano.mensagens).toEqual([
+      `Depois das contas fixas sobram só ${R$}120,00. Não dá para cobrir os essenciais, o colchão e a reserva.`,
+    ])
+  })
+
+  it('no déficit, nada vai para o colchão', () => {
+    expect(calcularPlano({ ...entrada('2026-10', 100000), colchao: 5000 }).colchao).toBe(0)
   })
 })

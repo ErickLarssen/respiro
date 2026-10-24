@@ -35,7 +35,7 @@ Uma pessoa só, usando principalmente o celular. Sem login no MVP: os dados fica
 **Não entra no MVP (fica para depois):**
 - Login e sincronização entre aparelhos (etapa 6, opcional).
 - Leitura automática de extrato bancário.
-- Ajuste de teto diferente só para um mês específico (ex.: roupas mais caras em novembro). Por enquanto, o usuário edita o valor da categoria quando o mês virar.
+- ~~Ajuste de teto diferente só para um mês específico~~: entrou na Etapa 5.1 (plano de cada mês), junto com o colchão. Ver `03-regras-de-negocio.md`, seções 7 e 8.
 - Gráficos elaborados, metas múltiplas, investimentos.
 
 ## Dados reais para o primeiro uso

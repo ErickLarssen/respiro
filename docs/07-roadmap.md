@@ -84,11 +84,29 @@ Uma etapa por vez. Ao fim de cada uma, o Claude Code **para** e mostra o resumo 
 - [x] `vite-plugin-pwa`: manifest (nome "Respiro", cores do tema, `display: "standalone"`) e service worker
 - [x] Testar offline com `npm run build && npm run preview`
 - [x] Subir para o GitHub
-- [ ] Deploy na Vercel (passo a passo para o usuário, tela por tela)
-- [ ] Instalar no celular: Chrome → menu ⋮ → "Adicionar à tela inicial"
+- [x] Deploy na Vercel (passo a passo para o usuário, tela por tela)
+- [x] Instalar no celular: Chrome → menu ⋮ → "Adicionar à tela inicial"
 - [ ] Exportar o primeiro backup
 
 **Pausa:** use o app por uma semana antes de pensar na etapa 6.
+
+---
+
+## Etapa 5.1 — Plano de cada mês e colchão
+
+Pedido depois da primeira semana de uso: os gastos variáveis mudam a cada mês, e faltava uma retenção "para não passar o mês duro". Regras em `03-regras-de-negocio.md`, seções 7 e 8.
+
+- [x] `MesPlanejado` e `config.metaColchao` (`04-modelo-de-dados.md`)
+- [x] `planejamento.ts`: o mês sem plano copia o último planejado + testes
+- [x] `calcularPlano` com desejos do mês e colchão (antes da reserva mínima) + testes, inclusive a propriedade "tudo soma a renda"
+- [x] `colchao.ts`: acumular, meta e uso automático do excesso + testes
+- [x] Projeção com plano por mês e colchão
+- [x] Banco versão 2 com migração automática + teste de migração
+- [x] Backup versão 2 (aceita backups da versão 1)
+- [x] Aba Plano: "Ajustar o plano do mês" com prévia na reserva
+- [x] Início: cartão do colchão e aviso de excesso; Ajustes: meta do colchão e categorias sem valor mensal
+
+**Pausa:** antes de publicar, **exporte um backup no celular** (com a versão atual do app). Depois do push, abra o app, confira que outubro continua igual, defina a meta do colchão e planeje novembro.
 
 ---
 

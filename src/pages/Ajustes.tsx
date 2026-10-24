@@ -19,7 +19,13 @@ export default function Ajustes() {
   // (importar backup, por exemplo), a key muda e a seção é recriada com os valores novos.
   // Sem isso, os campos mostrariam os valores antigos e "Salvar" gravaria por cima.
   const { config } = dados
-  const versaoDaConfig = [config.renda, config.diaUtilSalario, config.reservaMinima, config.limiteCartao ?? ''].join('|')
+  const versaoDaConfig = [
+    config.renda,
+    config.diaUtilSalario,
+    config.reservaMinima,
+    config.metaColchao ?? 0,
+    config.limiteCartao ?? '',
+  ].join('|')
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-8 px-4 pt-[calc(24px+env(safe-area-inset-top))] pb-[calc(112px+env(safe-area-inset-bottom))] min-[400px]:px-5">

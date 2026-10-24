@@ -9,7 +9,8 @@ import { lerValorDigitado, formatarBRL, valorParaDigitar } from '../../domain/di
 import type { Conta, Mes } from '../../domain/tipos'
 import { useLayout } from '../../hooks/useLayout'
 import type { PlanoDoMes } from '../../hooks/usePlanoDoMes'
-import { PreviaReserva, Secao } from './comum'
+import PreviaReserva from '../../components/PreviaReserva'
+import { Secao } from './comum'
 import { proximaOrdem } from './ordem'
 
 // Ajustes › Contas fixas: lista editável. Parcela pede "parcelas restantes" (como o usuário

@@ -3,18 +3,23 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { calcularPlano } from '../../domain/plano'
 import { dadosIniciais } from '../dadosIniciais'
 import {
+  adicionarCategoriaNoPlano,
   adicionarGasto,
   apagarCategoria,
   apagarGasto,
+  apagarMesPlanejado,
   apagarTudo,
   comecarDoZero,
   lerTudo,
   listarCategorias,
   listarContas,
   listarGastosDoMes,
+  listarGastosEntre,
+  listarPlanosDoMes,
   obterConfig,
   salvarConta,
   salvarGasto,
+  salvarMesPlanejado,
   substituirTudo,
 } from '../repositorio'
 
@@ -125,5 +130,50 @@ describe('lerTudo', () => {
 
   it('sem config, não há o que exportar', async () => {
     await expect(lerTudo()).rejects.toThrow('Ainda não há dados para exportar.')
+  })
+})
+
+describe('plano de cada mês', () => {
+  it('"Começar com meus dados" já cria o plano de outubro', async () => {
+    await substituirTudo(dadosIniciais)
+    expect(await listarPlanosDoMes()).toEqual([
+      { mes: '2026-10', desejos: { higiene: 10000, churrasco: 18000, lazer: 8000, roupas: 5209 }, colchao: 0 },
+    ])
+  })
+
+  it('salva e apaga o plano de um mês', async () => {
+    await substituirTudo(dadosIniciais)
+    await salvarMesPlanejado({ mes: '2026-12', desejos: { churrasco: 30000 }, colchao: 5000 })
+    expect((await listarPlanosDoMes()).map((p) => p.mes)).toEqual(['2026-10', '2026-12'])
+    await apagarMesPlanejado('2026-12')
+    expect((await listarPlanosDoMes()).map((p) => p.mes)).toEqual(['2026-10'])
+  })
+
+  it('categoria nova entra no plano a partir do mês escolhido, não antes', async () => {
+    await substituirTudo(dadosIniciais)
+    const presentes = { id: 'presentes', nome: 'Presentes', desejo: 999, essencial: false, cor: 'c5', ordem: 5 } as const
+    await adicionarCategoriaNoPlano(presentes, 20000, '2026-12')
+
+    const planos = await listarPlanosDoMes()
+    expect(planos.map((p) => [p.mes, p.desejos.presentes])).toEqual([
+      ['2026-10', undefined], // outubro não muda
+      ['2026-12', 20000], // dezembro ganha um plano próprio, com a categoria nova
+    ])
+    // A categoria fica com desejo 0: meses sem plano salvo (antes de outubro) não ganham esse gasto
+    expect((await listarCategorias()).find((c) => c.id === 'presentes')?.desejo).toBe(0)
+  })
+
+  it('o backup lê e devolve os planos', async () => {
+    await substituirTudo(dadosIniciais)
+    await salvarMesPlanejado({ mes: '2026-11', desejos: { lazer: 12000 }, colchao: 3000 })
+    expect((await lerTudo()).planosDoMes.map((p) => p.mes)).toEqual(['2026-10', '2026-11'])
+  })
+
+  it('lista os gastos de um período', async () => {
+    for (const data of ['2026-09-30', '2026-10-01', '2026-11-15', '2026-12-01']) {
+      await adicionarGasto({ data, valor: 100, categoriaId: 'lazer', forma: 'pix' })
+    }
+    const gastos = await listarGastosEntre('2026-10-01', '2026-11-30')
+    expect(gastos.map((g) => g.data).sort()).toEqual(['2026-10-01', '2026-11-15'])
   })
 })

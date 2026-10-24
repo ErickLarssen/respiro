@@ -1,10 +1,16 @@
-import type { Categoria, Config, Conta, DataISO, FormaPagamento, Gasto } from '../domain/tipos'
+import { mesDeInicio } from '../domain/colchao'
+import { planejamentoInicial } from '../domain/planejamento'
+import type { Categoria, Config, Conta, DataISO, FormaPagamento, Gasto, MesPlanejado } from '../domain/tipos'
 import type { DadosIniciais } from './dadosIniciais'
 
 // Backup em JSON (docs/04-modelo-de-dados.md, seção "Backup").
 // Os dados só existem no aparelho: o backup é a única cópia de segurança.
+//
+// Versão 2: inclui o plano de cada mês (planosDoMes) e a meta do colchão.
+// Backups da versão 1 continuam aceitos: o plano do primeiro mês é criado a partir
+// dos valores das categorias, como na migração do banco (data/db.ts).
 
-export const VERSAO_BACKUP = 1
+export const VERSAO_BACKUP = 2
 
 export interface Backup extends DadosIniciais {
   versao: typeof VERSAO_BACKUP
@@ -76,9 +82,9 @@ function numero(obj: Objeto, campo: string, onde: string): number {
   return valor
 }
 
-function lista(obj: Objeto, campo: string): unknown[] {
+function lista(obj: Objeto, campo: string, nome = campo): unknown[] {
   const valor = obj[campo]
-  if (!Array.isArray(valor)) throw new ErroDeBackup(`O arquivo não tem a lista de ${campo}.`)
+  if (!Array.isArray(valor)) throw new ErroDeBackup(`O arquivo não tem a lista de ${nome}.`)
   return valor
 }
 
@@ -98,6 +104,7 @@ function validarConfig(bruto: unknown): Config {
     criadoEm,
   }
   if (bruto.limiteCartao !== undefined) config.limiteCartao = centavos(bruto, 'limiteCartao', onde)
+  if (bruto.metaColchao !== undefined) config.metaColchao = centavos(bruto, 'metaColchao', onde)
   return config
 }
 
@@ -163,20 +170,38 @@ function validarGasto(bruto: unknown, i: number): Gasto {
   return gasto
 }
 
+function validarMesPlanejado(bruto: unknown, i: number): MesPlanejado {
+  const onde = `Plano do mês ${i + 1}`
+  if (!ehObjeto(bruto)) throw new ErroDeBackup(`${onde}: formato inválido.`)
+  const mes = texto(bruto, 'mes', onde)
+  if (!MES.test(mes)) throw new ErroDeBackup(`${onde}: "mes" precisa estar no formato AAAA-MM.`)
+  if (!ehObjeto(bruto.desejos)) throw new ErroDeBackup(`${onde}: faltam os valores das categorias.`)
+  const desejos: Record<string, number> = {}
+  for (const id of Object.keys(bruto.desejos)) desejos[id] = centavos(bruto.desejos, id, onde)
+  return { mes, desejos, colchao: centavos(bruto, 'colchao', onde) }
+}
+
 /** Confere um backup lido de arquivo. Não altera nada: só diz se dá para importar. */
 export function validarBackup(bruto: unknown): ResultadoValidacao {
   try {
     if (!ehObjeto(bruto)) throw new ErroDeBackup('Este arquivo não é um backup do Respiro.')
-    if (bruto.versao !== VERSAO_BACKUP) {
+    if (bruto.versao !== 1 && bruto.versao !== VERSAO_BACKUP) {
       throw new ErroDeBackup('Este backup é de uma versão que o app não conhece.')
     }
+    const config = validarConfig(bruto.config)
+    const categorias = lista(bruto, 'categorias').map(validarCategoria)
+    const planosDoMes =
+      bruto.versao === 1
+        ? [planejamentoInicial(categorias, mesDeInicio(config))]
+        : lista(bruto, 'planosDoMes', 'planos dos meses').map(validarMesPlanejado)
     return {
       ok: true,
       dados: {
-        config: validarConfig(bruto.config),
+        config,
         contas: lista(bruto, 'contas').map(validarConta),
-        categorias: lista(bruto, 'categorias').map(validarCategoria),
+        categorias,
         gastos: lista(bruto, 'gastos').map(validarGasto),
+        planosDoMes,
       },
     }
   } catch (erro) {

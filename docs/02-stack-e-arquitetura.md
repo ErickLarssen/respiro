@@ -56,6 +56,8 @@ respiro/
     │   ├── contas.ts             ← contaAtivaNoMes, totalContasFixas, parcelasRestantes, fimDasParcelas
     │   ├── credito.ts            ← gastoNoCredito, limiteLivre
     │   ├── plano.ts              ← calcularPlano (o coração do app), fraseEfeitoNaReserva
+    │   ├── planejamento.ts       ← plano de cada mês: o mês sem plano copia o último planejado
+    │   ├── colchao.ts            ← colchão: separar até a meta, cobrir o excesso, simularMeses
     │   ├── resumo.ts             ← gasto por categoria, quanto resta, valor por dia
     │   ├── projecao.ts           ← reserva mês a mês nos próximos 12 meses
     │   └── __tests__/            ← um arquivo .test.ts por arquivo acima
@@ -70,6 +72,7 @@ respiro/
     │   ├── useConfig.ts
     │   ├── useGastosDoMes.ts
     │   ├── usePlanoDoMes.ts
+    │   ├── carregarPlanoDoMes.ts ← banco + domínio de um mês (plano salvo, colchão, histórico)
     │   ├── useCategorias.ts
     │   ├── useMesSelecionado.ts  ← mês aberto na tela, guardado na URL (?mes=AAAA-MM)
     │   ├── anotarGasto.ts        ← salva/edita o gasto e decide o aviso (banco + domínio)
@@ -81,6 +84,7 @@ respiro/
     │   ├── useLuzDoCursor.ts     ← luz do fundo que segue o mouse
     │   └── useDeslizarHorizontal.ts ← deslizar o dedo para trocar o mês
     ├── components/
+    │   ├── PreviaReserva.tsx     ← "a reserva de outubro vai de X para Y" (Ajustes e Plano)
     │   └── ui/                   ← componentes da seção 7 do 08-design.md
     │       ├── Botao.tsx, Cartao.tsx, Valor.tsx, Etiqueta.tsx, Campo.tsx
     │       ├── Aviso.tsx
@@ -89,6 +93,7 @@ respiro/
     │       ├── AnelFolego.tsx    ← "quanto ainda posso gastar"
     │       ├── MedidorCategoria.tsx  ← medidor segmentado de um teto
     │       ├── Segmentado.tsx    ← opções lado a lado com a lente deslizante
+    │       ├── CartaoColchao.tsx ← saldo e meta do colchão (Início)
     │       ├── GraficoProjecao.tsx ← barras da reserva nos próximos 12 meses
     │       └── FolhaNovoGasto.tsx    ← painel que sobe de baixo para anotar ou editar gasto
     └── pages/
@@ -98,5 +103,6 @@ respiro/
         ├── Gastos.tsx
         ├── Plano.tsx
         ├── Ajustes.tsx
-        └── ajustes/              ← uma seção por arquivo: Renda, Contas, Categorias, Backup, Apagar tudo
+        ├── ajustes/              ← uma seção por arquivo: Renda, Contas, Categorias, Backup, Apagar tudo
+        └── plano/EditorDoMes.tsx ← "Ajustar o plano do mês"
 ```
